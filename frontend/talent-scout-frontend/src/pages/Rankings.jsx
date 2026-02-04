@@ -1,6 +1,6 @@
-// src/pages/Rankings.jsx - Professional Rankings Dashboard
+// src/pages/Rankings.jsx
 import { useState, useEffect } from 'react';
-import { Trophy, Filter, Download, Target, TrendingUp, Users, Award } from 'lucide-react';
+import { Trophy, Filter, Download, Target, TrendingUp, Users, Award, ChevronRight, ArrowUpDown, SlidersHorizontal, RefreshCw } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 
@@ -14,13 +14,8 @@ function Rankings() {
   const [maxAge, setMaxAge] = useState('');
   const [minPotential, setMinPotential] = useState('70');
 
-  useEffect(() => {
-    loadRankings();
-  }, []);
-
-  useEffect(() => {
-    applyFilters();
-  }, [players, sortBy, selectedPosition, minAge, maxAge, minPotential]);
+  useEffect(() => { loadRankings(); }, []);
+  useEffect(() => { applyFilters(); }, [players, sortBy, selectedPosition, minAge, maxAge, minPotential]);
 
   const loadRankings = async () => {
     try {
@@ -28,380 +23,217 @@ function Rankings() {
       const response = await api.getPlayers(1, 500);
       const allPlayers = response.data.items || [];
       setPlayers(allPlayers);
-      setFilteredPlayers(allPlayers.slice(0, 100));
-    } catch (err) {
-      console.error('Error loading rankings:', err);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { console.error('Error loading rankings:', err); }
+    finally { setLoading(false); }
   };
 
   const applyFilters = () => {
     let filtered = [...players];
+    if (selectedPosition !== 'All') filtered = filtered.filter(p => p.Pos_std === selectedPosition);
+    if (minAge) filtered = filtered.filter(p => (p.Age_std || p.Age) >= parseInt(minAge));
+    if (maxAge) filtered = filtered.filter(p => (p.Age_std || p.Age) <= parseInt(maxAge));
+    if (minPotential) filtered = filtered.filter(p => (p.peak_potential || 0) >= parseInt(minPotential));
 
-    // Position filter
-    if (selectedPosition !== 'All') {
-      filtered = filtered.filter(p => p.Pos_std === selectedPosition);
-    }
-
-    // Age filter
-    if (minAge) {
-      filtered = filtered.filter(p => (p.Age_std || p.Age) >= parseInt(minAge));
-    }
-    if (maxAge) {
-      filtered = filtered.filter(p => (p.Age_std || p.Age) <= parseInt(maxAge));
-    }
-
-    // Potential filter
-    if (minPotential) {
-      filtered = filtered.filter(p => (p.peak_potential || 0) >= parseInt(minPotential));
-    }
-
-    // Sorting
     filtered.sort((a, b) => {
       switch (sortBy) {
-        case 'potential_desc':
-          return (b.peak_potential || 0) - (a.peak_potential || 0);
-        case 'potential_asc':
-          return (a.peak_potential || 0) - (b.peak_potential || 0);
-        case 'current_desc':
-          return (b.current_rating || 0) - (a.current_rating || 0);
-        case 'growth_desc':
-          return ((b.peak_potential || 0) - (b.current_rating || 0)) - 
-                 ((a.peak_potential || 0) - (a.current_rating || 0));
-        case 'age_asc':
-          return (a.Age_std || a.Age || 0) - (b.Age_std || b.Age || 0);
-        default:
-          return 0;
+        case 'potential_desc': return (b.peak_potential || 0) - (a.peak_potential || 0);
+        case 'potential_asc': return (a.peak_potential || 0) - (b.peak_potential || 0);
+        case 'current_desc': return (b.current_rating || 0) - (a.current_rating || 0);
+        case 'growth_desc': return ((b.peak_potential || 0) - (b.current_rating || 0)) - ((a.peak_potential || 0) - (a.current_rating || 0));
+        case 'age_asc': return (a.Age_std || a.Age || 0) - (b.Age_std || b.Age || 0);
+        default: return 0;
       }
     });
-
     setFilteredPlayers(filtered.slice(0, 100));
   };
 
   const clearFilters = () => {
-    setSelectedPosition('All');
-    setMinAge('');
-    setMaxAge('');
-    setMinPotential('70');
-    setSortBy('potential_desc');
+    setSelectedPosition('All'); setMinAge(''); setMaxAge(''); setMinPotential('70'); setSortBy('potential_desc');
   };
 
-  const exportRankings = () => {
-    const csv = [
-      ['Rank', 'Player', 'Position', 'Age', 'Club', 'Current', 'Potential', 'Growth', 'Matches'],
-      ...filteredPlayers.map((p, idx) => [
-        idx + 1,
-        p.Player,
-        p.Pos_std,
-        p.Age_std || p.Age,
-        p.Squad_std,
-        (p.current_rating || 0).toFixed(1),
-        (p.peak_potential || 0).toFixed(1),
-        ((p.peak_potential || 0) - (p.current_rating || 0)).toFixed(1),
-        p.matches_played_display || 0
-      ])
-    ]
-      .map(row => row.join(','))
-      .join('\n');
-
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'youth_rankings.csv';
-    a.click();
-  };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
-          <p className="mt-4 text-gray-600">Loading rankings...</p>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <div className="flex flex-col items-center justify-center h-96 gap-4"><div className="w-12 h-12 border-4 border-slate-200 border-t-accent rounded-full animate-spin" /><p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Indexing Elite Registry...</p></div>;
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-amber-600 to-orange-600 rounded-2xl p-8 text-white">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <Trophy className="w-8 h-8" />
-              <h1 className="text-3xl font-bold">Youth Rankings</h1>
+    <div className="space-y-6">
+      {/* Cinematic Leaderboard Header */}
+      <div className="bg-slate-950 rounded-[2rem] p-8 lg:p-12 text-white relative overflow-hidden shadow-2xl border border-slate-800">
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-warning/5 to-transparent pointer-events-none" />
+        <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-warning/10 rounded-full blur-[100px] pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-warning/20 border border-warning/30">
+                <Trophy className="w-5 h-5 text-warning" />
+              </div>
+              <h1 className="text-3xl lg:text-4xl font-black italic uppercase tracking-tight">Elite Leaderboard</h1>
             </div>
-            <p className="text-orange-100">
-              Top 100 youth prospects ranked by predicted potential
-            </p>
+            <p className="text-slate-400 text-sm font-medium max-w-md uppercase tracking-[0.15em] text-[10px]">Ranked verification of the global top 100 youth profiles by predictive index.</p>
           </div>
-          <div className="text-right">
-            <div className="text-4xl font-bold">{filteredPlayers.length}</div>
-            <div className="text-orange-100 text-sm">Top Prospects</div>
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Bar */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl shadow-lg p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Target className="w-5 h-5 text-blue-600" />
-            <span className="text-sm text-gray-600">Top Potential</span>
-          </div>
-          <div className="text-2xl font-bold text-gray-900">
-            {filteredPlayers[0]?.peak_potential?.toFixed(1) || '0.0'}
-          </div>
-        </div>
-        <div className="bg-white rounded-xl shadow-lg p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Users className="w-5 h-5 text-green-600" />
-            <span className="text-sm text-gray-600">Avg Age</span>
-          </div>
-          <div className="text-2xl font-bold text-gray-900">
-            {(
-              filteredPlayers.reduce((sum, p) => sum + (p.Age_std || p.Age || 0), 0) / 
-              filteredPlayers.length || 0
-            ).toFixed(1)}
-          </div>
-        </div>
-        <div className="bg-white rounded-xl shadow-lg p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <TrendingUp className="w-5 h-5 text-purple-600" />
-            <span className="text-sm text-gray-600">Avg Growth</span>
-          </div>
-          <div className="text-2xl font-bold text-gray-900">
-            {(
-              filteredPlayers.reduce((sum, p) => sum + ((p.peak_potential || 0) - (p.current_rating || 0)), 0) / 
-              filteredPlayers.length || 0
-            ).toFixed(1)}
-          </div>
-        </div>
-        <div className="bg-white rounded-xl shadow-lg p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Award className="w-5 h-5 text-amber-600" />
-            <span className="text-sm text-gray-600">Elite (≥80)</span>
-          </div>
-          <div className="text-2xl font-bold text-gray-900">
-            {filteredPlayers.filter(p => (p.peak_potential || 0) >= 80).length}
-          </div>
-        </div>
-      </div>
-
-      {/* Filters */}
-      <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-        <div className="flex flex-wrap gap-4 items-end">
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Sort By
-            </label>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600"
-            >
-              <option value="potential_desc">Highest Potential ↓</option>
-              <option value="potential_asc">Lowest Potential ↑</option>
-              <option value="current_desc">Highest Current ↓</option>
-              <option value="growth_desc">Highest Growth ↓</option>
-              <option value="age_asc">Youngest First ↑</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Position
-            </label>
-            <select
-              value={selectedPosition}
-              onChange={(e) => setSelectedPosition(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-600"
-            >
-              <option value="All">All Positions</option>
-              <option value="FW">Forward (FW)</option>
-              <option value="MF">Midfielder (MF)</option>
-              <option value="DF">Defender (DF)</option>
-              <option value="GK">Goalkeeper (GK)</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Age Range
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="number"
-                placeholder="Min"
-                value={minAge}
-                onChange={(e) => setMinAge(e.target.value)}
-                className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              />
-              <input
-                type="number"
-                placeholder="Max"
-                value={maxAge}
-                onChange={(e) => setMaxAge(e.target.value)}
-                className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-              />
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur-md flex items-center gap-6">
+            <div className="text-center">
+              <div className="text-4xl font-black text-white italic">100</div>
+              <div className="text-[10px] font-black uppercase text-slate-500 tracking-widest mt-1">Tier-1 Slots</div>
+            </div>
+            <div className="h-10 w-[1px] bg-slate-800" />
+            <div className="flex flex-col items-end gap-1">
+              <div className="flex items-center gap-1.5 px-3 py-1 bg-warning/10 border border-warning/20 rounded-full">
+                <div className="w-1.5 h-1.5 rounded-full bg-warning animate-pulse" />
+                <span className="text-[10px] font-black text-warning uppercase tracking-tighter">Live Audit</span>
+              </div>
+              <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tighter italic italic">Global Consensus Index</span>
             </div>
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Min Potential
-            </label>
-            <input
-              type="number"
-              value={minPotential}
-              onChange={(e) => setMinPotential(e.target.value)}
-              className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm"
-            />
-          </div>
-
-          <div className="flex gap-2">
-            <button
-              onClick={clearFilters}
-              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium"
-            >
-              Clear
-            </button>
-            <button
-              onClick={exportRankings}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium flex items-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Export
-            </button>
-          </div>
         </div>
       </div>
 
-      {/* Rankings Table */}
-      <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
-        <div className="overflow-x-auto">
+      {/* KPI Dashboard */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <RankKPI label="Peak Indexed Pot" value={filteredPlayers[0]?.peak_potential?.toFixed(1) || '0.0'} icon={Target} color="blue" />
+        <RankKPI label="Sample Median Age" value={(filteredPlayers.reduce((sum, p) => sum + (p.Age_std || p.Age || 0), 0) / (filteredPlayers.length || 1)).toFixed(1)} icon={Users} color="orange" />
+        <RankKPI label="Growth Delta (Avg)" value={(filteredPlayers.reduce((sum, p) => sum + ((p.peak_potential || 0) - (p.current_rating || 0)), 0) / (filteredPlayers.length || 1)).toFixed(1)} icon={TrendingUp} color="indigo" />
+        <RankKPI label="Elite Nucleus (80+)" value={filteredPlayers.filter(p => (p.peak_potential || 0) >= 80).length} icon={Award} color="warning" />
+      </div>
+
+      {/* Control Center */}
+      <div className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-slate-50 border border-slate-100 italic">
+              <SlidersHorizontal className="w-4 h-4 text-slate-400" />
+            </div>
+            <h2 className="text-xs font-black text-slate-900 uppercase tracking-widest">Filter Matrix</h2>
+          </div>
+          <button onClick={clearFilters} className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 hover:text-accent transition-colors">
+            <RefreshCw className="w-3 h-3" /> Reset Grid
+          </button>
+        </div>
+
+        <div className="grid md:grid-cols-4 gap-8">
+          <FilterBlock label="Sort Logic">
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="w-full bg-slate-50 border-none px-4 py-3 rounded-xl text-xs font-black uppercase text-slate-700 outline-none">
+              <option value="potential_desc">Peak Potential ↓</option>
+              <option value="potential_asc">Peak Potential ↑</option>
+              <option value="current_desc">Current Capability ↓</option>
+              <option value="growth_desc">Development Surge ↓</option>
+              <option value="age_asc">Youngest Entry ↑</option>
+            </select>
+          </FilterBlock>
+
+          <FilterBlock label="Tactical Role">
+            <select value={selectedPosition} onChange={(e) => setSelectedPosition(e.target.value)} className="w-full bg-slate-50 border-none px-4 py-3 rounded-xl text-xs font-black uppercase text-slate-700 outline-none">
+              <option value="All">All Disciplines</option>
+              <option value="FW">Forwards</option>
+              <option value="MF">Midfielders</option>
+              <option value="DF">Defenders</option>
+              <option value="GK">Goalkeepers</option>
+            </select>
+          </FilterBlock>
+
+          <FilterBlock label="Age Spectrum">
+            <div className="flex items-center gap-3">
+              <input type="number" placeholder="Min" value={minAge} onChange={(e) => setMinAge(e.target.value)} className="w-full bg-slate-50 border-none px-4 py-3 rounded-xl text-xs font-black text-center text-slate-900 outline-none" />
+              <input type="number" placeholder="Max" value={maxAge} onChange={(e) => setMaxAge(e.target.value)} className="w-full bg-slate-50 border-none px-4 py-3 rounded-xl text-xs font-black text-center text-slate-900 outline-none" />
+            </div>
+          </FilterBlock>
+
+          <FilterBlock label="Threshold">
+            <div className="relative">
+              <input type="number" value={minPotential} onChange={(e) => setMinPotential(e.target.value)} className="w-full bg-slate-50 border-none px-4 py-3 rounded-xl text-xs font-black text-slate-900 outline-none pr-12" />
+              <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400">POT</span>
+            </div>
+          </FilterBlock>
+        </div>
+      </div>
+
+      {/* Rankings Registry */}
+      <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto text-left">
           <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Rank</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Player</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Position</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Club</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Age</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Matches</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Current</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Potential</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Growth</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Actions</th>
+            <thead>
+              <tr className="bg-slate-50 border-b border-slate-100">
+                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Rank</th>
+                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Profile Index</th>
+                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Role</th>
+                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Affiliation</th>
+                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center italic">Δ Potential</th>
+                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Potential Ceiling</th>
+                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Operation</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredPlayers.map((player, index) => {
-                const growth = (player.peak_potential || 0) - (player.current_rating || 0);
-                
-                return (
-                  <tr 
-                    key={player.id} 
-                    className="hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => window.open(`/player/${player.id}`, '_self')}
-                  >
-                    <td className="px-6 py-4">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold ${
-                        index === 0 ? 'bg-amber-100 text-amber-600' :
-                        index === 1 ? 'bg-gray-100 text-gray-600' :
-                        index === 2 ? 'bg-orange-100 text-orange-600' :
-                        'bg-blue-100 text-blue-600'
+            <tbody className="divide-y divide-slate-50">
+              {filteredPlayers.map((player, index) => (
+                <tr key={player.id} className="hover:bg-slate-50/80 transition-colors group cursor-pointer" onClick={() => window.open(`/player/${player.id}`, '_self')}>
+                  <td className="px-8 py-5">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm italic ${index === 0 ? 'bg-warning text-white shadow-lg shadow-warning/20' :
+                        index === 1 ? 'bg-slate-300 text-slate-700' :
+                          index === 2 ? 'bg-orange-400 text-white' :
+                            'bg-slate-100 text-slate-400'
                       }`}>
-                        {index + 1}
+                      {index + 1}
+                    </div>
+                  </td>
+                  <td className="px-8 py-5">
+                    <div className="text-sm font-black text-slate-900 italic tracking-tight">{player.Player}</div>
+                    <div className="text-[10px] text-slate-400 font-bold uppercase mt-0.5 tracking-tighter">Verified Prospect</div>
+                  </td>
+                  <td className="px-6 py-5 text-center font-black text-slate-400 text-[10px] uppercase italic">
+                    {player.Pos_std}
+                  </td>
+                  <td className="px-6 py-5 text-[10px] font-black text-slate-600 uppercase tracking-tighter truncate max-w-[150px]">
+                    {player.Squad_std}
+                  </td>
+                  <td className="px-6 py-5 text-center">
+                    <span className="text-[10px] font-black text-success uppercase italic">
+                      +{((player.peak_potential || 0) - (player.current_rating || 0)).toFixed(1)}
+                    </span>
+                  </td>
+                  <td className="px-8 py-5 text-right">
+                    <div className="flex flex-col items-end gap-1.5">
+                      <span className="text-sm font-black text-accent italic tracking-tighter">{(player.peak_potential || 0).toFixed(1)}</span>
+                      <div className="w-20 h-1 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-accent" style={{ width: `${Math.min(player.peak_potential || 0, 100)}%` }} />
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="font-bold text-gray-900">{player.Player}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded text-xs font-bold ${
-                        player.Pos_std === 'FW' ? 'bg-orange-100 text-orange-800' :
-                        player.Pos_std === 'MF' ? 'bg-purple-100 text-purple-800' :
-                        player.Pos_std === 'DF' ? 'bg-blue-100 text-blue-800' :
-                        'bg-gray-100 text-gray-800'
-                      }`}>
-                        {player.Pos_std}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{player.Squad_std}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{player.Age_std || player.Age}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{player.matches_played_display || 0}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {(player.current_rating || 0).toFixed(1)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 bg-gray-200 rounded-full h-2 w-24">
-                          <div
-                            className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full"
-                            style={{ width: `${Math.min(player.peak_potential || 0, 100)}%` }}
-                          ></div>
-                        </div>
-                        <span className="font-bold text-blue-600 min-w-[3rem]">
-                          {(player.peak_potential || 0).toFixed(1)}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`font-bold ${
-                        growth > 5 ? 'text-green-600' :
-                        growth > 2 ? 'text-blue-600' :
-                        growth > 0 ? 'text-yellow-600' :
-                        'text-gray-600'
-                      }`}>
-                        +{growth.toFixed(1)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Link
-                        to={`/player/${player.id}`}
-                        className="text-blue-600 hover:text-blue-700 font-medium text-sm"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        View
-                      </Link>
-                    </td>
-                  </tr>
-                );
-              })}
+                    </div>
+                  </td>
+                  <td className="px-8 py-5 text-right">
+                    <div className="inline-flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase group-hover:text-accent transition-colors">
+                      View <ChevronRight className="w-4 h-4" />
+                    </div>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
       </div>
+    </div>
+  );
+}
 
-      {/* Position Breakdown */}
-      <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Position Breakdown</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-          {['FW', 'MF', 'DF', 'GK'].map((position) => {
-            const positionPlayers = filteredPlayers.filter(p => p.Pos_std === position);
-            const avgPotential = positionPlayers.length > 0 
-              ? positionPlayers.reduce((sum, p) => sum + (p.peak_potential || 0), 0) / positionPlayers.length
-              : 0;
-            
-            return (
-              <div key={position} className="text-center p-4 bg-gray-50 rounded-xl">
-                <div className="text-2xl font-bold text-gray-900 mb-1">{position}</div>
-                <div className="text-sm text-gray-600 mb-2">
-                  {positionPlayers.length} players
-                </div>
-                <div className="text-lg font-bold text-blue-600">
-                  {avgPotential.toFixed(1)}
-                </div>
-                <div className="text-xs text-gray-500">Avg Potential</div>
-              </div>
-            );
-          })}
-        </div>
+function RankKPI({ label, value, icon: Icon, color }) {
+  const themes = {
+    blue: 'bg-blue-50 border-blue-100 text-blue-600',
+    orange: 'bg-orange-50 border-orange-100 text-orange-600',
+    indigo: 'bg-indigo-50 border-indigo-100 text-indigo-600',
+    warning: 'bg-warning/10 border-warning/20 text-warning'
+  };
+  return (
+    <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:border-accent/40 transition-all text-left">
+      <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${themes[color]}`}>
+        <Icon className="w-5 h-5" />
       </div>
+      <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{label}</div>
+      <div className="text-2xl font-black text-slate-900 italic tracking-tighter">{value}</div>
+    </div>
+  );
+}
+
+function FilterBlock({ label, children }) {
+  return (
+    <div className="space-y-3">
+      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</label>
+      {children}
     </div>
   );
 }

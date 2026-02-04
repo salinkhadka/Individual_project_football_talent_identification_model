@@ -1,106 +1,54 @@
 // src/components/Layout.jsx
-import { Outlet, NavLink } from 'react-router-dom';
-import { Home, Trophy, Users, BarChart3, Menu, X, Shield, Heart } from 'lucide-react';
-import { useState } from 'react';
+import { Outlet } from 'react-router-dom';
+import Sidebar from './Sidebar';
 
 function Layout() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const navItems = [
-    { path: '/', icon: Home, label: 'Home' },
-    { path: '/players', icon: Users, label: 'Players' },
-    { path: '/teams', icon: Shield, label: 'Teams' },
-    // { path: '/rankings', icon: Trophy, label: 'Rankings' },
-    { path: '/compare', icon: Users, label: 'Compare' },
-    { path: '/analytics', icon: BarChart3, label: 'Analytics' },
-    { path: '/watchlist', icon: Heart, label: 'Watchlist' },
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
-      {/* Header */}
-      <header className="bg-white shadow-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            {/* Logo */}
-            <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg transform hover:scale-105 transition-transform">
-                <span className="text-white text-2xl font-bold">⚽</span>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">Talent Scout</h1>
-                <p className="text-xs text-gray-500 font-medium">U19 Youth Analysis</p>
-              </div>
-            </div>
+    <div className="flex min-h-screen bg-surface-light">
+      {/* Sidebar Navigation */}
+      <Sidebar />
 
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex space-x-2">
-              {navItems.map((item) => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  className={({ isActive }) =>
-                    `flex items-center space-x-2 px-4 py-2.5 rounded-xl transition-all duration-200 font-medium ${
-                      isActive
-                        ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg shadow-purple-500/30 scale-105'
-                        : 'text-gray-700 hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 hover:text-purple-700'
-                    }`
-                  }
-                >
-                  <item.icon className="w-5 h-5" />
-                  <span>{item.label}</span>
-                </NavLink>
-              ))}
-            </nav>
-
-            {/* Mobile Menu Button */}
-            <button
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
+      {/* Main Content Area */}
+      <div className="flex-1 ml-64 flex flex-col min-h-screen">
+        {/* Top Header / Context Bar */}
+        <header className="h-16 border-b border-slate-200 bg-white sticky top-0 z-40 flex items-center justify-between px-8">
+          <div className="flex items-center gap-4">
+            <h2 className="text-slate-500 font-medium text-sm">Youth Football Talent Identification System</h2>
+            <div className="h-4 w-[1px] bg-slate-200" />
+            <span className="badge-pro bg-slate-100 text-slate-600">v2.1.0-STABLE</span>
           </div>
 
-          {/* Mobile Navigation */}
-          {mobileMenuOpen && (
-            <nav className="md:hidden py-4 space-y-2">
-              {navItems.map((item) => (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={({ isActive }) =>
-                    `flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
-                      isActive
-                        ? 'bg-purple-600 text-white'
-                        : 'text-gray-700 hover:bg-purple-50'
-                    }`
-                  }
-                >
-                  <item.icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
-                </NavLink>
-              ))}
-            </nav>
-          )}
-        </div>
-      </header>
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg border border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+              Backend Connected
+            </div>
+          </div>
+        </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-200px)]">
-        <Outlet />
-      </main>
+        {/* Dynamic Content */}
+        <main className="p-8 flex-1">
+          <div className="max-w-[1600px] mx-auto">
+            <Outlet />
+          </div>
+        </main>
 
-      {/* Footer */}
-      <footer className="bg-gradient-to-r from-purple-50 to-blue-50 border-t border-purple-100 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <p className="text-center text-gray-600 text-sm font-medium">
-            © 2024 Talent Scout System • Ml-Powered Youth Player Analysis
-          </p>
-        </div>
-      </footer>
+        {/* Footer */}
+        <footer className="px-8 py-6 border-t border-slate-100 bg-white">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <p className="text-slate-400 text-[11px] font-bold uppercase tracking-widest">
+              © 2024 Talent Scout Pro • Academic Thesis Demonstration
+            </p>
+            <div className="flex items-center gap-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+              <span className="hover:text-accent cursor-pointer">Documentation</span>
+              <span className="hover:text-accent cursor-pointer">Model Ethics</span>
+              <span className="hover:text-accent cursor-pointer">Contact Supervisor</span>
+            </div>
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }
+
 export default Layout;

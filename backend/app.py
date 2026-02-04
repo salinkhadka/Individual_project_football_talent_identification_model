@@ -192,6 +192,19 @@ def get_player_by_id(player_id):
         player = db.get_player_by_id(player_id)
         if player:
             formatted = player_to_frontend_format(player)
+            
+            # Fetch progression to determine context
+            raw_prog = db.get_player_progression(player.get('player_name'))
+            progression = [player_to_frontend_format(p) for p in raw_prog]
+            
+            # Add context flags
+            formatted['progression'] = progression
+            formatted['has_incomplete_season'] = any(p.get('Season', '').startswith('2025') for p in progression)
+            
+            # Check if this IS the best season (in case id lookup was used)
+            max_pot = max([p.get('peak_potential', 0) for p in progression]) if progression else 0
+            formatted['is_best_potential'] = formatted.get('peak_potential', 0) >= max_pot
+            
             return jsonify(formatted)
         else:
             return jsonify({'error': 'Player not found'}), 404
@@ -277,15 +290,19 @@ def recalculate_potential(player_id):
         
         new_scores = calculator.calculate_potential(player)
         
+        # PERSIST TO DB
+        db.update_player_scores(player_id, new_scores)
+        
         result = {
             'player_name': player['player_name'],
             'season': player['season'],
             'old_scores': {
-                'predicted_potential': player['predicted_potential'],
-                'performance_score': player['performance_score'],
-                'ml_development_score': player['ml_development_score']
+                'predicted_potential': player.get('predicted_potential'),
+                'performance_score': player.get('performance_score'),
+                'ml_development_score': player.get('ml_development_score')
             },
-            'new_scores': new_scores
+            'new_scores': new_scores,
+            'persisted': True
         }
         
         return jsonify(result)
@@ -518,6 +535,11 @@ def get_scouting_report(player_id):
             }
             for p in similar_players
         ]
+        
+        # Get progression history to include in report
+        raw_progression = db.get_player_progression(player.get('player_name'))
+        progression = [player_to_frontend_format(p) for p in raw_progression]
+        player['progression'] = progression
         
         # Generate report
         report = generate_scouting_report(player, formatted_similar)

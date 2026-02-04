@@ -1,11 +1,15 @@
+// src/pages/ComparePlayers.jsx
 import { useEffect, useState, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Users, X, Plus, Search, AlertCircle } from 'lucide-react';
+import {
+  Users, X, Plus, Search, AlertCircle, ArrowLeftRight,
+  ChevronRight, Info, Zap, Shield, Target, Award,
+  BarChart3, LayoutGrid, ArrowUpDown
+} from 'lucide-react';
 import api from '../services/api';
 import CompareCharts from '../components/CompareCharts';
 import CompareTable from '../components/CompareTable';
 
-// Comparison feedback component
 function ComparisonFeedback({ players }) {
   if (players.length < 2) return null;
 
@@ -17,177 +21,37 @@ function ComparisonFeedback({ players }) {
   const positions = Object.keys(positionCounts);
   const uniquePositions = positions.length;
 
- const getMessage = () => {
-  // Single-position comparison
-  if (uniquePositions === 1) {
-    const pos = positions[0];
-
-    const messages = {
-      FW: {
-        icon: '⚽',
-        title: 'Forward Performance Analysis',
-        description:
-          'Comparative evaluation of attacking output, including goal conversion, shot quality, off-ball movement, and chance creation.',
-        note:
-          'Since both players operate as forwards, the comparison emphasizes direct attacking impact and efficiency in goal-scoring situations.',
-        color: 'bg-orange-50 border-orange-200 text-orange-800'
-      },
-      MF: {
-        icon: '🎯',
-        title: 'Midfield Control Comparison',
-        description:
-          'Assessment of playmaking influence, ball progression, passing efficiency, spatial awareness, and tempo control.',
-        note:
-          'With identical midfield roles, the focus is on control of possession, creativity, and influence on overall team structure.',
-        color: 'bg-purple-50 border-purple-200 text-purple-800'
-      },
-      DF: {
-        icon: '🛡️',
-        title: 'Defensive Effectiveness Review',
-        description:
-          'Evaluation of defensive reliability, including duels, interceptions, positioning discipline, and build-up contribution.',
-        note:
-          'Both players are defenders, so the comparison prioritizes defensive stability, decision-making, and consistency under pressure.',
-        color: 'bg-blue-50 border-blue-200 text-blue-800'
-      },
-      GK: {
-        icon: '🧤',
-        title: 'Goalkeeper Shot-Stopping Analysis',
-        description:
-          'Comparison of goal prevention metrics such as save efficiency, positioning, aerial command, and distribution quality.',
-        note:
-          'As both players are goalkeepers, the analysis focuses on shot-stopping ability, reliability, and contribution to build-up play.',
-        color: 'bg-green-50 border-green-200 text-green-800'
-      }
-    };
-
-    return messages[pos];
-  }
-
-  // Two-position comparison
-  if (uniquePositions === 2) {
-    const [pos1, pos2] = positions;
-
-    // Forward + Midfielder
-    if (
-      (pos1 === 'FW' && pos2 === 'MF') ||
-      (pos1 === 'MF' && pos2 === 'FW')
-    ) {
-      return {
-        icon: '⚡',
-        title: 'Offensive Contribution Comparison',
-        description:
-          'Analysis of attacking influence across different roles, focusing on involvement in chance creation and goal-related actions.',
-        note:
-          'As the players occupy forward and midfield roles, the comparison highlights positive offensive impact rather than direct positional output.',
-        color: 'bg-pink-50 border-pink-200 text-pink-800'
+  const getMessage = () => {
+    if (uniquePositions === 1) {
+      const pos = positions[0];
+      const configs = {
+        FW: { icon: Target, title: 'Attack Hierarchy', color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20', desc: 'Direct comparison of goal-scoring efficiency and final-third impact.' },
+        MF: { icon: Zap, title: 'Engine Room Metrics', color: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/20', desc: 'Evaluation of distribution accuracy and transition control.' },
+        DF: { icon: Shield, title: 'Defensive Fortification', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', desc: 'Reliability analysis focusing on duels won and positional discipline.' },
+        GK: { icon: Award, title: 'Shot-Stopping Audit', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', desc: 'Save percentage and distribution quality assessment.' }
       };
+      return configs[pos] || configs.MF;
     }
-
-    // Midfielder + Defender
-    if (
-      (pos1 === 'MF' && pos2 === 'DF') ||
-      (pos1 === 'DF' && pos2 === 'MF')
-    ) {
-      return {
-        icon: '🔄',
-        title: 'Build-Up & Transition Analysis',
-        description:
-          'Evaluation of influence in defensive and midfield phases, emphasizing ball progression, positional discipline, and transition play.',
-        note:
-          'Since one player is a midfielder and the other a defender, the comparison focuses on positive contributions to build-up play and defensive stability rather than raw attacking statistics.',
-        color: 'bg-indigo-50 border-indigo-200 text-indigo-800'
-      };
-    }
-
-    // Any other mixed pairing
-    return {
-      icon: '🔀',
-      title: 'Cross-Role Performance Comparison',
-      description:
-        'Comparison across distinct positional roles, prioritizing adaptability, effectiveness, and overall match impact.',
-      note:
-        'With differing roles, direct statistical comparisons are contextualized to emphasize how each player positively impacts their team within their respective responsibilities.',
-      color: 'bg-cyan-50 border-cyan-200 text-cyan-800'
-    };
-  }
-
-  // Three or more different positions
-  return {
-    icon: '🌟',
-    title: 'Multi-Positional Squad Overview',
-    description:
-      'Holistic comparison of players across multiple areas of the pitch, focusing on balance, versatility, and overall contribution.',
-    note:
-      'Due to the diversity of positions, the analysis emphasizes overall impact, adaptability, and role suitability rather than position-specific dominance.',
-    color: 'bg-violet-50 border-violet-200 text-violet-800'
+    return { icon: ArrowLeftRight, title: 'Hybrid Comparison', color: 'text-accent', bg: 'bg-accent/10', border: 'border-accent/20', desc: 'Analyzing versatile contributions across distinct tactical roles.' };
   };
-};
 
-
-  const message = getMessage();
+  const config = getMessage();
 
   return (
-    <div className={`${message.color} border-2 rounded-xl p-4 mb-6`}>
-      <div className="flex items-start gap-3">
-        <div className="text-3xl">{message.icon}</div>
+    <div className={`${config.bg} ${config.border} border rounded-2xl p-6 mb-6 animate-in fade-in slide-in-from-top-4 duration-500`}>
+      <div className="flex items-start gap-4">
+        <div className={`p-3 rounded-xl bg-white/10 ${config.color}`}>
+          <config.icon className="w-6 h-6" />
+        </div>
         <div className="flex-1">
-          <h3 className="font-bold text-lg mb-1">{message.title}</h3>
-          <p className="text-sm opacity-90">{message.description}</p>
-          <div className="flex flex-wrap gap-2 mt-3">
-            {positions.map(pos => (
-              <span key={pos} className="px-2 py-1 bg-white/50 rounded text-xs font-bold">
-                {pos} ({positionCounts[pos]})
-              </span>
-            ))}
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="text-sm font-black text-slate-900 uppercase tracking-widest">{config.title}</h3>
+            <div className="h-4 w-[1px] bg-slate-200" />
+            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-tighter">Positional Context Active</span>
           </div>
+          <p className="text-xs text-slate-500 leading-relaxed max-w-2xl">{config.desc}</p>
         </div>
       </div>
-    </div>
-  );
-}
-
-// Position filter component
-function PositionFilter({ selectedPosition, onPositionChange, playerCounts }) {
-  const positions = [
-    { value: 'All', label: 'All Positions', icon: '⚽' },
-    { value: 'FW', label: 'Forwards', icon: '⚽', color: 'orange' },
-    { value: 'MF', label: 'Midfielders', icon: '🎯', color: 'purple' },
-    { value: 'DF', label: 'Defenders', icon: '🛡️', color: 'blue' },
-    { value: 'GK', label: 'Goalkeepers', icon: '🧤', color: 'green' }
-  ];
-
-  return (
-    <div className="flex flex-wrap gap-2">
-      {positions.map(pos => {
-        const count = playerCounts[pos.value] || 0;
-        const isSelected = selectedPosition === pos.value;
-        
-        const colorClasses = {
-          orange: isSelected ? 'bg-orange-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
-          purple: isSelected ? 'bg-purple-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
-          blue: isSelected ? 'bg-blue-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200',
-          green: isSelected ? 'bg-green-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-        };
-        
-        return (
-          <button
-            key={pos.value}
-            onClick={() => onPositionChange(pos.value)}
-            className={`px-4 py-2 rounded-lg font-medium transition-all ${
-              pos.value === 'All' 
-                ? (isSelected ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200')
-                : colorClasses[pos.color]
-            }`}
-          >
-            <span className="mr-2">{pos.icon}</span>
-            {pos.label}
-            {pos.value !== 'All' && (
-              <span className="ml-2 text-xs opacity-75">({count})</span>
-            )}
-          </button>
-        );
-      })}
     </div>
   );
 }
@@ -201,319 +65,241 @@ function ComparePlayers() {
   const [searching, setSearching] = useState(false);
   const [error, setError] = useState(null);
   const [positionFilter, setPositionFilter] = useState('All');
-  
+
   const isManualUpdate = useRef(false);
 
   useEffect(() => {
-    if (isManualUpdate.current) {
-      isManualUpdate.current = false;
-      return;
-    }
+    // 1. Initial Load from LocalStorage
+    const stored = localStorage.getItem('compare_pool');
+    let pool = stored ? JSON.parse(stored) : [];
 
+    // 2. Load from URL Params (if present, they take priority)
     const ids = searchParams.get('ids');
     if (ids) {
-      const urlIds = ids.split(',')
-        .map(id => parseInt(id))
-        .filter(id => !isNaN(id) && id > 0);
-      
-      const currentIds = selectedPlayers.map(p => p.id);
-      
-      const isDifferent = urlIds.length !== currentIds.length || 
-                          !urlIds.every(id => currentIds.includes(id));
-
-      if (isDifferent && urlIds.length > 0) {
+      const urlIds = ids.split(',').map(id => parseInt(id)).filter(id => !isNaN(id) && id > 0);
+      if (urlIds.length > 0) {
         loadPlayersById(urlIds);
-      } else if (urlIds.length === 0 && selectedPlayers.length > 0) {
-        setSelectedPlayers([]);
+        return; // loadPlayersById will handle the update
       }
-    } else if (selectedPlayers.length > 0) {
-      setSelectedPlayers([]);
     }
-  }, [searchParams]);
+
+    // 3. Fallback to pool if no URL ids
+    if (pool.length > 0) {
+      setSelectedPlayers(pool);
+    }
+  }, []);
+
+  // Sync back to localStorage / URL on every change
+  useEffect(() => {
+    if (isManualUpdate.current) {
+      const ids = selectedPlayers.map(p => p.id);
+      if (ids.length > 0) {
+        setSearchParams({ ids: ids.join(',') });
+        localStorage.setItem('compare_pool', JSON.stringify(selectedPlayers));
+      } else {
+        setSearchParams({});
+        localStorage.removeItem('compare_pool');
+      }
+      isManualUpdate.current = false;
+    }
+  }, [selectedPlayers]);
 
   const loadPlayersById = async (ids) => {
     try {
-      setLoading(true);
-      setError(null);
-      
+      setLoading(true); setError(null);
       const response = await api.comparePlayers({ player_ids: ids });
       const data = Array.isArray(response.data) ? response.data : response.data.players || [];
-      const sortedData = data.sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id));
-      
-      setSelectedPlayers(sortedData);
-    } catch (err) {
-      console.error('Error loading players:', err);
-      setError('Failed to load player data. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+      const sorted = data.sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id));
+      setSelectedPlayers(sorted);
+      // Also update localStorage to ensure full data sync
+      localStorage.setItem('compare_pool', JSON.stringify(sorted));
+    } catch (err) { setError('Failed to synchronize comparison registry.'); }
+    finally { setLoading(false); }
   };
 
   const handleSearch = async (term) => {
     setSearchTerm(term);
-    if (term.length < 2) {
-      setSearchResults([]);
-      return;
-    }
-
+    if (term.length < 2) { setSearchResults([]); return; }
     try {
       setSearching(true);
       const response = await api.searchPlayers(term);
       let results = response.data || [];
-      
-      // Apply position filter to search results
-      if (positionFilter !== 'All') {
-        results = results.filter(p => p.Pos_std === positionFilter);
-      }
-      
+      if (positionFilter !== 'All') results = results.filter(p => p.Pos_std === positionFilter);
       setSearchResults(results);
-    } catch (err) {
-      console.error('Error searching:', err);
-      setSearchResults([]);
-    } finally {
-      setSearching(false);
-    }
+    } catch (err) { setSearchResults([]); }
+    finally { setSearching(false); }
   };
 
   const addPlayer = (player) => {
-    if (selectedPlayers.length >= 4) {
-      alert('Maximum 4 players can be compared');
-      return;
-    }
-
-    if (selectedPlayers.find(p => p.id === player.id)) {
-      alert('Player already added');
-      return;
-    }
-
+    if (selectedPlayers.length >= 4) return;
+    if (selectedPlayers.find(p => p.id === player.id)) return;
     const newPlayers = [...selectedPlayers, player];
     setSelectedPlayers(newPlayers);
     setSearchTerm('');
     setSearchResults([]);
-
     isManualUpdate.current = true;
-
-    const ids = newPlayers.map(p => p.id).join(',');
-    setSearchParams({ ids });
+    setSearchParams({ ids: newPlayers.map(p => p.id).join(',') });
   };
 
   const removePlayer = (playerId) => {
     const updated = selectedPlayers.filter(p => p.id !== playerId);
     setSelectedPlayers(updated);
-    
     isManualUpdate.current = true;
-
-    if (updated.length > 0) {
-      const ids = updated.map(p => p.id).join(',');
-      setSearchParams({ ids });
-    } else {
-      setSearchParams({});
-    }
+    if (updated.length > 0) setSearchParams({ ids: updated.map(p => p.id).join(',') });
+    else setSearchParams({});
   };
 
-  // Calculate position counts for filter buttons
-  const positionCounts = selectedPlayers.reduce((acc, p) => {
-    acc[p.Pos_std] = (acc[p.Pos_std] || 0) + 1;
-    return acc;
-  }, {});
-
-  // Re-trigger search when position filter changes
-  useEffect(() => {
-    if (searchTerm.length >= 2) {
-      handleSearch(searchTerm);
-    }
-  }, [positionFilter]);
+  const formatValue = (val) => {
+    if (val === null || val === undefined) return '0.0';
+    return parseFloat(val).toFixed(1);
+  };
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-2xl p-6 text-white shadow-xl">
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <Users className="w-8 h-8" />
-              <h1 className="text-3xl font-bold">Compare Players</h1>
+    <div className="space-y-6">
+      {/* Cinematic Header */}
+      <div className="bg-slate-950 rounded-[2rem] p-8 lg:p-12 text-white relative overflow-hidden shadow-2xl border border-slate-800">
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-accent/5 to-transparent" />
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-accent/20 border border-accent/30">
+                <LayoutGrid className="w-5 h-5 text-accent" />
+              </div>
+              <h1 className="text-3xl lg:text-4xl font-black italic uppercase tracking-tight">Comparative Matrix</h1>
             </div>
-            <p className="text-purple-100">
-              Side-by-side analysis of up to 4 players
-            </p>
+            <p className="text-slate-400 text-sm font-medium max-w-md uppercase tracking-widest text-[10px]">Technical head-to-head analysis engine for strategic prospect evaluation.</p>
           </div>
-          <div className="text-right">
-            <div className="text-4xl font-bold">{selectedPlayers.length}/4</div>
-            <div className="text-purple-100 text-sm">Players Selected</div>
+          <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur-md flex items-center gap-6">
+            <div className="text-center">
+              <div className="text-4xl font-black text-white">{selectedPlayers.length}<span className="text-slate-600">/4</span></div>
+              <div className="text-[10px] font-black uppercase text-slate-500 tracking-[0.2em] mt-1">Slots Active</div>
+            </div>
+            <div className="h-10 w-[1px] bg-slate-800" />
+            <div className="flex -space-x-3">
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className={`w-10 h-10 rounded-full border-2 border-slate-900 flex items-center justify-center text-[10px] font-black ${i < selectedPlayers.length ? 'bg-accent text-white' : 'bg-slate-800 text-slate-600'}`}>
+                  {i < selectedPlayers.length ? selectedPlayers[i].Player?.[0] : '?'}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Position Filter */}
-      <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-        <label className="block text-sm font-medium text-gray-700 mb-3">
-          Filter by Position
-        </label>
-        <PositionFilter
-          selectedPosition={positionFilter}
-          onPositionChange={setPositionFilter}
-          playerCounts={positionCounts}
-        />
-      </div>
-
-      {/* Search */}
-      <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100 relative z-20">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Search Players to Compare
-        </label>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+      {/* Global Controls */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm grid md:grid-cols-12 gap-4 items-center">
+        <div className="md:col-span-4 relative group">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-accent transition-colors" />
           <input
             type="text"
+            placeholder="Summon player for comparison..."
             value={searchTerm}
             onChange={(e) => handleSearch(e.target.value)}
-            placeholder={`Search ${positionFilter === 'All' ? 'all positions' : positionFilter + 's'}...`}
-            className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent outline-none transition-shadow"
             disabled={selectedPlayers.length >= 4}
+            className="w-full bg-slate-50 border border-slate-200 pl-12 pr-4 py-3 rounded-xl text-sm font-bold focus:outline-none focus:border-accent focus:bg-white transition-all outline-none"
           />
+          {searchResults.length > 0 && (
+            <div className="absolute left-0 right-0 mt-3 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+              {searchResults.slice(0, 5).map(p => (
+                <button key={p.id} onClick={() => addPlayer(p)} className="w-full flex items-center justify-between p-4 hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0 text-left">
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-black text-slate-400 uppercase w-8">{p.Pos_std}</span>
+                    <div>
+                      <div className="text-xs font-black text-slate-900">{p.Player}</div>
+                      <div className="text-[9px] text-slate-400 font-bold uppercase">{p.Squad_std}</div>
+                    </div>
+                  </div>
+                  <Plus className="w-4 h-4 text-slate-300" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Search Results Dropdown */}
-        {searchResults.length > 0 && (
-          <div className="absolute left-0 right-0 mt-2 bg-white rounded-xl shadow-2xl border border-gray-100 max-h-80 overflow-y-auto z-50">
-            {searchResults.slice(0, 10).map((player) => (
-              <button
-                key={player.id}
-                onClick={() => addPlayer(player)}
-                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-0"
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${
-                    player.Pos_std === 'FW' ? 'bg-orange-100 text-orange-600' :
-                    player.Pos_std === 'MF' ? 'bg-purple-100 text-purple-600' :
-                    player.Pos_std === 'DF' ? 'bg-blue-100 text-blue-600' :
-                    'bg-green-100 text-green-600'
-                  }`}>
-                    {player.Pos_std}
-                  </div>
-                  <div className="text-left">
-                    <p className="font-bold text-gray-900">{player.Player}</p>
-                    <p className="text-xs text-gray-500">{player.Squad_std}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="text-right">
-                    <div className="text-xs text-gray-400">Potential</div>
-                    <div className="font-bold text-purple-600">{(player.peak_potential || 0).toFixed(1)}</div>
-                  </div>
-                  <Plus className="w-5 h-5 text-gray-400" />
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="md:col-span-8 flex flex-wrap gap-2 items-center justify-end">
+          {['FW', 'MF', 'DF', 'GK'].map(pos => (
+            <button key={pos} onClick={() => setPositionFilter(pos)} className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${positionFilter === pos ? 'bg-slate-900 border-slate-900 text-white shadow-lg' : 'bg-white border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50'}`}>
+              {pos}
+            </button>
+          ))}
+          <button onClick={() => setPositionFilter('All')} className={`ml-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${positionFilter === 'All' ? 'bg-slate-900 border-slate-900 text-white shadow-lg' : 'bg-white border-slate-200 text-slate-500'}`}>All</button>
+        </div>
+      </div>
 
-        {searching && (
-          <div className="mt-4 text-center">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600 mx-auto" />
+      <ComparisonFeedback players={selectedPlayers} />
+
+      {/* Selected Modules */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {selectedPlayers.map(p => (
+          <div key={p.id} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:border-accent transition-all group relative">
+            <button onClick={() => removePlayer(p.id)} className="absolute top-4 right-4 p-1.5 rounded-lg bg-slate-50 text-slate-400 hover:bg-danger/10 hover:text-danger transition-colors">
+              <X className="w-4 h-4" />
+            </button>
+            <div className="space-y-4 text-left">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-xs font-black text-slate-400 group-hover:bg-accent group-hover:text-white transition-all">
+                  {p.Player?.[0]}
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-slate-900 leading-tight">{p.Player}</h3>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{p.Squad_std}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 pt-4 border-t border-slate-50">
+                <div className="space-y-1">
+                  <div className="text-[8px] font-black text-slate-400 uppercase">Potential</div>
+                  <div className="text-sm font-black text-slate-900 italic tracking-tighter">{formatValue(p.peak_potential)}</div>
+                </div>
+                <div className="space-y-1">
+                  <div className="text-[8px] font-black text-slate-400 uppercase">Performance</div>
+                  <div className="text-sm font-black text-accent italic tracking-tighter">{formatValue(p.current_rating)}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+        {selectedPlayers.length < 4 && (
+          <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center text-center group cursor-pointer hover:bg-white hover:border-accent/40 transition-all">
+            <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center mb-3 group-hover:bg-accent group-hover:text-white transition-all">
+              <Plus className="w-5 h-5 text-slate-400" />
+            </div>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Awaiting Profile</span>
           </div>
         )}
       </div>
 
-      {/* Comparison Feedback */}
+      {/* Advanced Visualization Engine */}
       {selectedPlayers.length >= 2 && (
-        <ComparisonFeedback players={selectedPlayers} />
-      )}
-
-      {/* Selected Players Cards */}
-      {selectedPlayers.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {selectedPlayers.map((player) => (
-            <div
-              key={player.id}
-              className="bg-white rounded-xl shadow-md p-4 border border-purple-100 relative group hover:shadow-lg transition-shadow"
-            >
-              <button
-                onClick={() => removePlayer(player.id)}
-                className="absolute top-2 right-2 p-1 bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-600 rounded-full transition-colors"
-                title="Remove player"
-              >
-                <X className="w-4 h-4" />
-              </button>
-
-              <div className="mb-4 pr-6">
-                <h3 className="font-bold text-gray-900 truncate" title={player.Player}>
-                  {player.Player}
-                </h3>
-                <p className="text-xs text-gray-500 truncate">{player.Squad_std}</p>
-                <span className={`inline-block mt-2 px-2 py-0.5 text-xs font-bold rounded ${
-                  player.Pos_std === 'FW' ? 'bg-orange-50 text-orange-700' :
-                  player.Pos_std === 'MF' ? 'bg-purple-50 text-purple-700' :
-                  player.Pos_std === 'DF' ? 'bg-blue-50 text-blue-700' :
-                  'bg-green-50 text-green-700'
-                }`}>
-                  {player.Pos_std}
-                </span>
+        <div className="space-y-6 animate-in fade-in duration-700">
+          <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm text-left">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="p-2 rounded-lg bg-indigo-50">
+                <BarChart3 className="w-5 h-5 text-indigo-600" />
               </div>
-
-              <div className="space-y-2 pt-2 border-t border-gray-50">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Potential</span>
-                  <span className="font-bold text-purple-600">{(player.peak_potential || 0).toFixed(1)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Current</span>
-                  <span className="font-bold text-blue-600">{(player.current_rating || 0).toFixed(1)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Goals/90</span>
-                  <span className="font-medium text-gray-900">{(player['Per 90 Minutes_Gls'] || 0).toFixed(2)}</span>
-                </div>
-              </div>
+              <h2 className="text-xs font-black text-slate-900 uppercase tracking-widest">Cross-Metric Distribution</h2>
             </div>
-          ))}
-        </div>
-      )}
-
-      {loading && selectedPlayers.length === 0 && (
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
-          <p className="mt-4 text-gray-600">Loading comparisons...</p>
-        </div>
-      )}
-
-      {error && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-lg flex items-center gap-2">
-          <AlertCircle className="w-5 h-5" />
-          {error}
-        </div>
-      )}
-
-      {/* Data Visualization */}
-      {selectedPlayers.length >= 2 && (
-        <div className="grid grid-cols-1 gap-6">
-          {/* Comparison Charts */}
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Visual Comparison</h2>
             <CompareCharts players={selectedPlayers} />
           </div>
 
-          {/* Detailed Table */}
-          <div className="bg-white rounded-xl shadow-lg p-6 border border-gray-100">
-            <h2 className="text-xl font-bold text-gray-900 mb-6">Detailed Statistics</h2>
+          <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm text-left">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="p-2 rounded-lg bg-emerald-50">
+                <ArrowLeftRight className="w-5 h-5 text-emerald-600" />
+              </div>
+              <h2 className="text-xs font-black text-slate-900 uppercase tracking-widest">Tactical head-to-head Registry</h2>
+            </div>
             <CompareTable players={selectedPlayers} />
           </div>
         </div>
       )}
 
-      {/* Empty State */}
-      {!loading && selectedPlayers.length < 2 && (
-        <div className="bg-white rounded-xl shadow-lg p-12 text-center border border-gray-100">
-          <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            {selectedPlayers.length === 0 ? 'No Players Selected' : 'Select More Players'}
-          </h2>
-          <p className="text-gray-600 mb-6">
-            {selectedPlayers.length === 0 
-              ? 'Search and add players above to start comparing'
-              : 'Add at least one more player to see the comparison'}
-          </p>
+      {selectedPlayers.length < 2 && (
+        <div className="bg-white rounded-[2rem] border border-slate-200 p-20 text-center shadow-sm">
+          <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-8 opacity-40">
+            <Users className="w-10 h-10 text-slate-300" />
+          </div>
+          <h2 className="text-xl font-black text-slate-900 mb-2">Registry Incomplete</h2>
+          <p className="text-slate-500 text-sm max-w-sm mx-auto">Select at least two high-confidence prospect profiles to activate the comparison engine.</p>
         </div>
       )}
     </div>

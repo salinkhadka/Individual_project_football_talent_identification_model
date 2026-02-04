@@ -1,1 +1,49 @@
 @import "tailwindcss";
+
+@theme {
+  /* Scout Pro Palette */
+  --color-slate-950: #020617;
+  --color-slate-900: #0f172a;
+  --color-slate-800: #1e293b;
+  --color-slate-700: #334155;
+  
+  --color-primary: var(--color-slate-900);
+  --color-accent: #3b82f6;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  
+  --color-surface-light: #f8fafc;
+  --color-surface-dim: #f1f5f9;
+  
+  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+  --font-display: "Outfit", var(--font-sans);
+}
+
+@layer base {
+  body {
+    @apply bg-surface-light text-slate-900 font-sans antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-semibold tracking-tight;
+  }
+}
+
+@layer components {
+  .card-analytics {
+    @apply bg-white border border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-300;
+  }
+  
+  .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 font-medium text-slate-400 hover:text-white hover:bg-slate-800;
+  }
+  
+  .sidebar-link-active {
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg font-bold text-white bg-accent shadow-lg shadow-accent/20;
+  }
+  
+  .badge-pro {
+    @apply px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider;
+  }
+}

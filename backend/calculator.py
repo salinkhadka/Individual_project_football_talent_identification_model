@@ -131,10 +131,10 @@ class PotentialCalculator:
     def _calculate_outfield_performance(self, player_data: Dict) -> float:
         """Calculate performance for outfield players"""
         position = player_data.get('position', 'FW')
-        goals_per_90 = player_data.get('goals_per_90', 0)
-        xg_per_90 = player_data.get('xg_per_90', 0)
-        xa_per_90 = player_data.get('xa_per_90', 0)
-        goals = player_data.get('goals', 0)
+        goals_per_90 = player_data.get('goals_per_90', 0) or 0
+        xg_per_90 = player_data.get('xg_per_90', 0) or 0
+        xa_per_90 = player_data.get('xa_per_90', 0) or 0
+        goals = player_data.get('goals', 0) or 0
         
         bench = self.elite_benchmarks.get(position, self.elite_benchmarks['FW'])
         
@@ -302,24 +302,24 @@ class PotentialCalculator:
     
     def _extract_ml_features(self, player_data: Dict) -> np.ndarray:
         """Extract features for ML model"""
-        minutes = player_data.get('minutes', 0)
-        goals = player_data.get('goals', 0)
-        assists = player_data.get('assists', 0)
+        minutes = player_data.get('minutes', 0) or 0
+        goals = player_data.get('goals', 0) or 0
+        assists = player_data.get('assists', 0) or 0
         
         goals_per_90 = (goals / minutes * 90) if minutes > 0 else 0
         assists_per_90 = (assists / minutes * 90) if minutes > 0 else 0
         
         features = [
-            player_data.get('age', 18),
-            player_data.get('matches', 0),
-            player_data.get('starts', 0),
+            player_data.get('age', 18) or 18,
+            player_data.get('matches', 0) or 0,
+            player_data.get('starts', 0) or 0,
             minutes,
             goals,
             goals_per_90,
             assists,
             assists_per_90,
-            player_data.get('xg_per_90', 0) * minutes / 90 if minutes > 0 else 0,
-            player_data.get('xa_per_90', 0) * minutes / 90 if minutes > 0 else 0,
+            (player_data.get('xg_per_90', 0) or 0) * minutes / 90 if minutes > 0 else 0,
+            (player_data.get('xa_per_90', 0) or 0) * minutes / 90 if minutes > 0 else 0,
             0, 0, 0, 75, 0, 0, 0, 0, 0, 0
         ]
         

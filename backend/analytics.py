@@ -111,8 +111,16 @@ def generate_scouting_report(player: Dict, similar_players: List[Dict]) -> Dict:
     # Scout notes
     scout_notes = generate_scout_notes(player, tier, growth)
     
+    # Career Totals
+    progression = player.get('progression', [])
+    total_matches = sum(int(p.get('matches', p.get('Playing Time_MP_raw', 0))) for p in progression)
+    total_goals = sum(int(p.get('goals', p.get('Performance_Gls', 0))) for p in progression)
+    
     # Season-over-season change
-    season_change = calculate_season_change(player)
+    season_change = calculate_season_change(player, progression)
+    
+    # Check for incomplete season (anywhere in history)
+    has_incomplete_season = any(p.get('Season', p.get('season', '')).startswith('2025') for p in progression)
     
     return {
         'player': {
@@ -120,7 +128,10 @@ def generate_scouting_report(player: Dict, similar_players: List[Dict]) -> Dict:
             'age': age,
             'position': position,
             'team': player.get('club', 'Unknown'),
-            'nation': player.get('nation', 'Unknown')
+            'nation': player.get('nation', 'Unknown'),
+            'seasons_count': len(progression),
+            'current_season': player.get('Season', player.get('season', 'Unknown')),
+            'is_best_potential': player.get('is_best_potential', False)
         },
         'ratings': {
             'current': performance_score,
@@ -130,7 +141,9 @@ def generate_scouting_report(player: Dict, similar_players: List[Dict]) -> Dict:
         'performance': {
             'matches': matches,
             'goals': goals,
-            'goals_per_match': goals / matches if matches > 0 else 0
+            'goals_per_match': goals / matches if matches > 0 else 0,
+            'total_matches': total_matches,
+            'total_goals': total_goals
         },
         'growth': growth,
         'analysis': {
@@ -142,7 +155,10 @@ def generate_scouting_report(player: Dict, similar_players: List[Dict]) -> Dict:
         'recommendation': recommendation,
         'scout_notes': scout_notes,
         'similar_players': similar_players,
-        'season_change': season_change
+        'season_change': season_change,
+        'progression': progression,
+        'is_incomplete': player.get('Season', player.get('season', '')).startswith('2025'),
+        'has_incomplete_season': has_incomplete_season
     }
 
 
@@ -309,15 +325,74 @@ def generate_scout_notes(player: Dict, tier: Dict, growth: Dict) -> str:
     return notes
 
 
-def calculate_season_change(player: Dict) -> Dict:
-    """Calculate season-over-season changes if available"""
-    # This would require historical data - for now return placeholder
+def calculate_season_change(player: Dict, progression: List[Dict]) -> Dict:
+    """Calculate season-over-season changes if multiple seasons available"""
+    if not progression or len(progression) < 2:
+        return {
+            'available': False,
+            'previous_season': None,
+            'current_season': player.get('Season', player.get('season')),
+            'rating_change': 0,
+            'goals_change': 0,
+            'matches_change': 0,
+            'trend': 'stable'
+        }
+    
+    # Sort progression by season (latest first)
+    # Robust key handling for both raw and formatted dicts
+    sorted_prog = sorted(progression, key=lambda x: x.get('Season', x.get('season', '')), reverse=True)
+    
+    # Find the index of the "requested" player's season in the progression
+    req_season = player.get('Season', player.get('season'))
+    current_idx = 0
+    for i, p in enumerate(sorted_prog):
+        if p.get('Season', p.get('season')) == req_season:
+            current_idx = i
+            break
+            
+    # If there's no season older than the current one, return unavailable
+    if current_idx >= len(sorted_prog) - 1:
+        return {
+            'available': False,
+            'previous_season': None,
+            'current_season': req_season,
+            'rating_change': 0,
+            'goals_change': 0,
+            'matches_change': 0,
+            'trend': 'stable'
+        }
+    
+    current = sorted_prog[current_idx]
+    previous = sorted_prog[current_idx + 1]
+    
+    curr_rating = float(current.get('performance_score', current.get('CurrentRating', 0)))
+    prev_rating = float(previous.get('performance_score', previous.get('CurrentRating', 0)))
+    rating_change = round(curr_rating - prev_rating, 1)
+    
+    curr_goals = int(current.get('goals', current.get('Performance_Gls', 0)))
+    prev_goals = int(previous.get('goals', previous.get('Performance_Gls', 0)))
+    goals_change = curr_goals - prev_goals
+    
+    curr_matches = int(current.get('matches', current.get('Playing Time_MP_raw', 0)))
+    prev_matches = int(previous.get('matches', previous.get('Playing Time_MP_raw', 0)))
+    matches_change = curr_matches - prev_matches
+    
+    curr_goals_pm = curr_goals / curr_matches if curr_matches > 0 else 0
+    prev_goals_pm = prev_goals / prev_matches if prev_matches > 0 else 0
+    gpm_change = round(curr_goals_pm - prev_goals_pm, 2)
+    
+    trend = 'improving' if rating_change > 0 else 'declining' if rating_change < 0 else 'stable'
+    prev_season_label = previous.get('Season', previous.get('season', 'Previous Cycle'))
+    trend_label = f"Performance {trend} since {prev_season_label}"
+    
     return {
-        'available': False,
-        'previous_season': None,
-        'current_season': None,
-        'rating_change': 0,
-        'goals_change': 0,
-        'matches_change': 0,
-        'trend': 'stable'
+        'available': True,
+        'previous_season': prev_season_label,
+        'current_season': current.get('Season', current.get('season')),
+        'rating_change': rating_change,
+        'goals_change': goals_change,
+        'matches_change': matches_change,
+        'goals_per_match_change': gpm_change,
+        'trend': trend,
+        'trend_label': trend_label
     }

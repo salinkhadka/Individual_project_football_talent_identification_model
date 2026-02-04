@@ -220,6 +220,28 @@ class Database:
         
         return self._clean_row_nulls(dict(row)) if row else None
     
+    def update_player_scores(self, player_id: int, scores: Dict) -> bool:
+        """Update specific scores for a player record"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        try:
+            # Build dynamic update
+            columns = list(scores.keys())
+            set_clause = ', '.join([f"{col} = ?" for col in columns])
+            values = [scores[col] for col in columns]
+            values.append(player_id)
+            
+            cursor.execute(f"UPDATE players SET {set_clause} WHERE id = ?", values)
+            conn.commit()
+            success = cursor.rowcount > 0
+            conn.close()
+            return success
+        except Exception as e:
+            print(f"Error updating player scores: {e}")
+            conn.close()
+            return False
+
     def get_player_best_season(self, player_name: str) -> Optional[Dict]:
         """Get player's BEST season (highest potential)"""
         conn = self.get_connection()
