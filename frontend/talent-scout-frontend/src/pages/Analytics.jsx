@@ -179,7 +179,7 @@ function Analytics() {
     return (
       <div className="flex flex-col items-center justify-center h-96 gap-4">
         <div className="w-12 h-12 border-4 border-slate-200 border-t-accent rounded-full animate-spin" />
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Processing League Data...</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Analyzing League Trends...</p>
       </div>
     );
   }
@@ -197,9 +197,9 @@ function Analytics() {
               <div className="p-2.5 rounded-xl bg-accent/20 border border-accent/30">
                 <BarChart3 className="w-5 h-5 text-accent" />
               </div>
-              <h1 className="text-3xl lg:text-4xl font-black italic uppercase tracking-tight">Advanced Analytics</h1>
+              <h1 className="text-3xl lg:text-4xl font-black italic uppercase tracking-tight">Scouting Insights</h1>
             </div>
-            <p className="text-slate-400 text-sm font-medium max-w-md uppercase tracking-[0.15em] text-[10px]">Statistical visualization and discovery engine for global youth talent pools.</p>
+            <p className="text-slate-400 text-sm font-medium max-w-md uppercase tracking-[0.15em] text-[10px]">Visualizing development trends and discovering the next generation of U19 talent.</p>
           </div>
           <div className="flex items-center gap-6 bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur-md">
             <div className="text-center">
@@ -233,17 +233,17 @@ function Analytics() {
             <div className="p-2 rounded-lg bg-slate-50 border border-slate-100 italic">
               <SlidersHorizontal className="w-4 h-4 text-slate-400 font-black" />
             </div>
-            <h2 className="text-xs font-black text-slate-900 uppercase tracking-widest">Control Center</h2>
+            <h2 className="text-xs font-black text-slate-900 uppercase tracking-widest">Scouting Controls</h2>
           </div>
           <button onClick={() => setFilters({ minAge: 15, maxAge: 23, minPotential: 70, position: 'All', club: 'All' })} className="flex items-center gap-2 text-[10px] font-black uppercase text-slate-400 hover:text-accent transition-colors">
-            <RefreshCw className="w-3 h-3" /> Reset Grid
+            <RefreshCw className="w-3 h-3" /> Reset Registry
           </button>
         </div>
 
         <div className="grid md:grid-cols-4 gap-8">
           <FilterGroup label="Positional Focus">
             <select value={filters.position} onChange={(e) => handleFilterChange('position', e.target.value)} className="w-full bg-slate-50 border-none px-4 py-3 rounded-xl text-xs font-black uppercase text-slate-700 outline-none focus:ring-2 focus:ring-accent/20 transition-all">
-              <option value="All">All Disciplines</option>
+              <option value="All">All Positions</option>
               <option value="FW">Forwards</option>
               <option value="MF">Midfielders</option>
               <option value="DF">Defenders</option>
@@ -276,8 +276,8 @@ function Analytics() {
       <div className="bg-slate-950 rounded-[2.5rem] border border-slate-800 p-8 shadow-2xl relative overflow-hidden">
         <div className="flex items-center justify-between mb-8 relative z-10">
           <div>
-            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic mb-1">Potential Chart</h2>
-            <p className="text-xs font-black text-white uppercase italic tracking-tighter">Age (X) vs. Predicted Potential (Y)</p>
+            <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic mb-1">Development Grid</h2>
+            <p className="text-xs font-black text-white uppercase italic tracking-tighter">Age (X) vs. Potential Score (Y)</p>
           </div>
           <div className="flex items-center gap-4 bg-white/5 px-4 py-2 rounded-xl backdrop-blur-sm border border-white/10">
             <div className="flex items-center gap-2">
@@ -327,9 +327,24 @@ function Analytics() {
 
       {/* Intelligence Insights */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-        <InsightModule title="Peak Cluster" description="Position maintaining the highest theoretical growth velocity." value={positionComparisonData.labels[positionComparisonData.datasets[1].data.indexOf(Math.max(...positionComparisonData.datasets[1].data))] || 'N/A'} icon={Target} />
-        <InsightModule title="Academy Alpha" description="Leading institutional contributor to the current elite filtered pool." value={clubPowerData.labels[0] || 'N/A'} icon={Award} />
-        <InsightModule title="Gem Density" description="Proprietary count of outlier potential players in visibility." value={`${filteredPlayers.filter(p => (p.peak_potential || 0) >= 80).length} Prospects`} icon={Zap} />
+        <InsightModule
+          title="Top Position"
+          description="Position with the strongest development trend."
+          value={positionComparisonData.labels[positionComparisonData.datasets[1].data.indexOf(Math.max(...positionComparisonData.datasets[1].data))] || 'N/A'}
+          icon={Target}
+        />
+        <InsightModule
+          title="Best Academy"
+          description="Club producing the most elite talent."
+          value={clubPowerData.labels[0] || 'N/A'}
+          icon={Award}
+        />
+        <InsightModule
+          title="Elite Talents"
+          description="Total count of elite U19 prospects."
+          value={`${filteredPlayers.filter(p => (p.peak_potential || 0) >= 80).length} Prospects`}
+          icon={Zap}
+        />
       </div>
     </div>
   );

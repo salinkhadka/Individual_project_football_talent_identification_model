@@ -22,17 +22,53 @@ function ComparisonFeedback({ players }) {
   const uniquePositions = positions.length;
 
   const getMessage = () => {
+    const hasPosition = (pos) => positionCounts[pos] > 0;
+
+    // Single Position Logic
     if (uniquePositions === 1) {
       const pos = positions[0];
       const configs = {
-        FW: { icon: Target, title: 'Attack Hierarchy', color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20', desc: 'Direct comparison of goal-scoring efficiency and final-third impact.' },
-        MF: { icon: Zap, title: 'Engine Room Metrics', color: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/20', desc: 'Evaluation of distribution accuracy and transition control.' },
-        DF: { icon: Shield, title: 'Defensive Fortification', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', desc: 'Reliability analysis focusing on duels won and positional discipline.' },
-        GK: { icon: Award, title: 'Shot-Stopping Audit', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', desc: 'Save percentage and distribution quality assessment.' }
+        FW: { icon: Target, title: 'Attack Hierarchy', color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20', desc: 'Direct comparison of goal-scoring efficiency, shot volume, and final-third conversion rates.' },
+        MF: { icon: Zap, title: 'Engine Room Metrics', color: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/20', desc: 'Evaluation of distribution accuracy, progressive carries, and transition control efficiency.' },
+        DF: { icon: Shield, title: 'Defensive Fortification', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', desc: 'Reliability analysis focusing on duel win rates, recovery volume, and structural discipline.' },
+        GK: { icon: Award, title: 'Shot-Stopping Audit', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', desc: 'Save percentage consistency and distribution quality assessment under pressure.' }
       };
       return configs[pos] || configs.MF;
     }
-    return { icon: ArrowLeftRight, title: 'Hybrid Comparison', color: 'text-accent', bg: 'bg-accent/10', border: 'border-accent/20', desc: 'Analyzing versatile contributions across distinct tactical roles.' };
+
+    // Direct Attacking vs Creative Mix
+    if (hasPosition('FW') && hasPosition('MF') && uniquePositions === 2) {
+      return {
+        icon: Target,
+        title: 'Attacking Variance Study',
+        color: 'text-orange-400',
+        bg: 'bg-orange-500/5',
+        border: 'border-orange-500/20',
+        desc: 'Comparing Forwards with Midfielders. Note: Standard output metrics (Goals/xG) naturally skew toward Forwards. Weighted scouting should prioritize "Creative Volume" and "Progression" for Midfielders to maintain parity.'
+      };
+    }
+
+    // Creative vs Defensive Mix
+    if (hasPosition('MF') && hasPosition('DF') && uniquePositions === 2) {
+      return {
+        icon: Shield,
+        title: 'Progression Matrix',
+        color: 'text-indigo-400',
+        bg: 'bg-indigo-500/5',
+        border: 'border-indigo-500/20',
+        desc: 'Analyzing the transition from Build-up (DF) to Progression (MF). Focus on "Retention Rates" for Defenders vs "Key Pass Volume" for Midfielders to evaluate distinct tactical impacts.'
+      };
+    }
+
+    // General Hybrid Case
+    return {
+      icon: ArrowLeftRight,
+      title: 'Hybrid Role Analysis',
+      color: 'text-accent',
+      bg: 'bg-accent/10',
+      border: 'border-accent/20',
+      desc: 'Analyzing disparate tactical roles. For cross-positional benchmarking, our "Potential Score" provides the most accurate performance-normalized index.'
+    };
   };
 
   const config = getMessage();
@@ -165,9 +201,9 @@ function ComparePlayers() {
               <div className="p-2 rounded-lg bg-accent/20 border border-accent/30">
                 <LayoutGrid className="w-5 h-5 text-accent" />
               </div>
-              <h1 className="text-3xl lg:text-4xl font-black italic uppercase tracking-tight">Comparative Matrix</h1>
+              <h1 className="text-3xl lg:text-4xl font-black italic uppercase tracking-tight">Player Comparison</h1>
             </div>
-            <p className="text-slate-400 text-sm font-medium max-w-md uppercase tracking-widest text-[10px]">Technical head-to-head analysis engine for strategic prospect evaluation.</p>
+            <p className="text-slate-400 text-sm font-medium max-w-md uppercase tracking-widest text-[10px]">Professional comparison tools for evaluating multiple prospects side-by-side.</p>
           </div>
           <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur-md flex items-center gap-6">
             <div className="text-center">
@@ -192,7 +228,7 @@ function ComparePlayers() {
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-accent transition-colors" />
           <input
             type="text"
-            placeholder="Summon player for comparison..."
+            placeholder="Search player to add..."
             value={searchTerm}
             onChange={(e) => handleSearch(e.target.value)}
             disabled={selectedPlayers.length >= 4}
@@ -286,7 +322,7 @@ function ComparePlayers() {
               <div className="p-2 rounded-lg bg-emerald-50">
                 <ArrowLeftRight className="w-5 h-5 text-emerald-600" />
               </div>
-              <h2 className="text-xs font-black text-slate-900 uppercase tracking-widest">Tactical head-to-head Registry</h2>
+              <h2 className="text-xs font-black text-slate-900 uppercase tracking-widest">Tactical Comparison</h2>
             </div>
             <CompareTable players={selectedPlayers} />
           </div>
@@ -299,7 +335,7 @@ function ComparePlayers() {
             <Users className="w-10 h-10 text-slate-300" />
           </div>
           <h2 className="text-xl font-black text-slate-900 mb-2">Registry Incomplete</h2>
-          <p className="text-slate-500 text-sm max-w-sm mx-auto">Select at least two high-confidence prospect profiles to activate the comparison engine.</p>
+          <p className="text-slate-500 text-sm max-w-sm mx-auto">Select at least two prospect profiles to activate the comparison tool.</p>
         </div>
       )}
     </div>

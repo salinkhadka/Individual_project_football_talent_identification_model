@@ -12,6 +12,7 @@ function Players() {
   const [players, setPlayers] = useState([]);
   const [watchlist, setWatchlist] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
   const [toggleWatchlistLoading, setToggleWatchlistLoading] = useState(null);
 
   // Filter States
@@ -79,6 +80,31 @@ function Players() {
     return result;
   }, [players, searchQuery, sortBy, selectedPosition, minPotential]);
 
+  const handleExportCSV = async () => {
+    try {
+      setExporting(true);
+      const filters = {
+        position: selectedPosition === 'All' ? null : selectedPosition,
+        min_potential: minPotential > 0 ? minPotential : null
+      };
+
+      const response = await api.exportPlayers(filters);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `players_export_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Export error:', err);
+      alert('Failed to export CSV. Please try again.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const toggleWatchlist = async (playerId, e) => {
     e.stopPropagation();
     const isInWatchlist = watchlist.some(p => String(p.player_id) === String(playerId));
@@ -104,7 +130,7 @@ function Players() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-slate-200 border-t-accent rounded-full animate-spin" />
-          <p className="text-slate-500 font-bold text-xs uppercase tracking-widest">Hydrating Database...</p>
+          <p className="text-slate-500 font-bold text-xs uppercase tracking-widest">Loading Scouting Registry...</p>
         </div>
       </div>
     );
@@ -117,16 +143,22 @@ function Players() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Users className="w-5 h-5 text-accent" />
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Prospect Intelligence</h1>
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">Scouting Registry</h1>
           </div>
-          <p className="text-slate-500 text-sm font-medium">Global U19 Scouting Database • {players.length} Verified Profiles</p>
+          <p className="text-slate-500 text-sm font-medium">Global U19 Database • {players.length} Profiles</p>
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => {/* CSV Export Logic */ }}
-            className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold uppercase tracking-widest transition-all"
+            onClick={handleExportCSV}
+            disabled={exporting}
+            className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold uppercase tracking-widest transition-all disabled:opacity-50"
           >
-            <Download className="w-4 h-4" /> Export CSV
+            {exporting ? (
+              <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Download className="w-4 h-4" />
+            )}
+            {exporting ? 'Exporting...' : 'Export CSV'}
           </button>
           <div className="h-8 w-[1px] bg-slate-200 hidden md:block" />
           <div className="bg-accent/10 border border-accent/20 px-3 py-1.5 rounded-lg">
@@ -182,7 +214,7 @@ function Players() {
         {showFilters && (
           <div className="pt-4 border-t border-slate-800 grid grid-cols-1 md:grid-cols-3 gap-6 animate-in slide-in-from-top-4 duration-300">
             <div>
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 block">Positional Grade</label>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 block">Position Filter</label>
               <div className="flex flex-wrap gap-2">
                 {['All', 'FW', 'MF', 'DF', 'GK'].map(pos => (
                   <button
@@ -198,7 +230,7 @@ function Players() {
             </div>
 
             <div>
-              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 block">Potential Floor (Min: {minPotential})</label>
+              <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 block">Minimum Potential Score ({minPotential})</label>
               <input
                 type="range"
                 min="0"
@@ -248,15 +280,15 @@ function Players() {
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-slate-50 inline-table w-full md:table">
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-12">#</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Player Analysis</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Team Profile</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Pos</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Rating</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Potential</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Growth</th>
-                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-24 text-right">Actions</th>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-16">#</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Player Profile</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Club</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Position</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Current Rating</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Potential Score</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Potential Gap</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest w-32 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -314,8 +346,8 @@ function Players() {
                           <div className="flex-1 min-w-[60px] max-w-[100px] h-1.5 bg-slate-100 rounded-full overflow-hidden hidden sm:block">
                             <div
                               className={`h-full transition-all duration-1000 ${player.peak_potential >= 80 ? 'bg-success' :
-                                  player.peak_potential >= 70 ? 'bg-accent' :
-                                    'bg-slate-400'
+                                player.peak_potential >= 70 ? 'bg-accent' :
+                                  'bg-slate-400'
                                 }`}
                               style={{ width: `${(player.peak_potential / 100) * 100}%` }}
                             />

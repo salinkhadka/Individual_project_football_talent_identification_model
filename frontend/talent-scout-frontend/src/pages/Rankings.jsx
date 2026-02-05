@@ -66,9 +66,9 @@ function Rankings() {
               <div className="p-2.5 rounded-xl bg-warning/20 border border-warning/30">
                 <Trophy className="w-5 h-5 text-warning" />
               </div>
-              <h1 className="text-3xl lg:text-4xl font-black italic uppercase tracking-tight">Elite Leaderboard</h1>
+              <h1 className="text-3xl lg:text-4xl font-black italic uppercase tracking-tight">Top 100 Prospects</h1>
             </div>
-            <p className="text-slate-400 text-sm font-medium max-w-md uppercase tracking-[0.15em] text-[10px]">Ranked verification of the global top 100 youth profiles by predictive index.</p>
+            <p className="text-slate-400 text-sm font-medium max-w-md uppercase tracking-[0.15em] text-[10px]">Verified ranking of the top 100 U19 prospects by potential score.</p>
           </div>
           <div className="bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur-md flex items-center gap-6">
             <div className="text-center">
@@ -89,10 +89,10 @@ function Rankings() {
 
       {/* KPI Dashboard */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <RankKPI label="Peak Indexed Pot" value={filteredPlayers[0]?.peak_potential?.toFixed(1) || '0.0'} icon={Target} color="blue" />
-        <RankKPI label="Sample Median Age" value={(filteredPlayers.reduce((sum, p) => sum + (p.Age_std || p.Age || 0), 0) / (filteredPlayers.length || 1)).toFixed(1)} icon={Users} color="orange" />
-        <RankKPI label="Growth Delta (Avg)" value={(filteredPlayers.reduce((sum, p) => sum + ((p.peak_potential || 0) - (p.current_rating || 0)), 0) / (filteredPlayers.length || 1)).toFixed(1)} icon={TrendingUp} color="indigo" />
-        <RankKPI label="Elite Nucleus (80+)" value={filteredPlayers.filter(p => (p.peak_potential || 0) >= 80).length} icon={Award} color="warning" />
+        <RankKPI label="Top Potential" value={filteredPlayers[0]?.peak_potential?.toFixed(1) || '0.0'} icon={Target} color="blue" />
+        <RankKPI label="Average Age" value={(filteredPlayers.reduce((sum, p) => sum + (p.Age_std || p.Age || 0), 0) / (filteredPlayers.length || 1)).toFixed(1)} icon={Users} color="orange" />
+        <RankKPI label="Development Potential" value={(filteredPlayers.reduce((sum, p) => sum + ((p.peak_potential || 0) - (p.current_rating || 0)), 0) / (filteredPlayers.length || 1)).toFixed(1)} icon={TrendingUp} color="indigo" />
+        <RankKPI label="Elite Prospects" value={filteredPlayers.filter(p => (p.peak_potential || 0) >= 80).length} icon={Award} color="warning" />
       </div>
 
       {/* Control Center */}
@@ -112,17 +112,17 @@ function Rankings() {
         <div className="grid md:grid-cols-4 gap-8">
           <FilterBlock label="Sort Logic">
             <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="w-full bg-slate-50 border-none px-4 py-3 rounded-xl text-xs font-black uppercase text-slate-700 outline-none">
-              <option value="potential_desc">Peak Potential ↓</option>
-              <option value="potential_asc">Peak Potential ↑</option>
-              <option value="current_desc">Current Capability ↓</option>
-              <option value="growth_desc">Development Surge ↓</option>
+              <option value="potential_desc">Top Potential ↓</option>
+              <option value="potential_asc">Top Potential ↑</option>
+              <option value="current_desc">Current Rating ↓</option>
+              <option value="growth_desc">Potential Growth ↓</option>
               <option value="age_asc">Youngest Entry ↑</option>
             </select>
           </FilterBlock>
 
           <FilterBlock label="Tactical Role">
             <select value={selectedPosition} onChange={(e) => setSelectedPosition(e.target.value)} className="w-full bg-slate-50 border-none px-4 py-3 rounded-xl text-xs font-black uppercase text-slate-700 outline-none">
-              <option value="All">All Disciplines</option>
+              <option value="All">All Positions</option>
               <option value="FW">Forwards</option>
               <option value="MF">Midfielders</option>
               <option value="DF">Defenders</option>
@@ -153,12 +153,12 @@ function Rankings() {
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100">
                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Rank</th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Profile Index</th>
-                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Role</th>
-                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Affiliation</th>
-                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center italic">Δ Potential</th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Potential Ceiling</th>
-                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Operation</th>
+                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Player Profile</th>
+                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Pos</th>
+                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Club</th>
+                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center italic">Potential Gap</th>
+                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Potential Score</th>
+                <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -166,9 +166,9 @@ function Rankings() {
                 <tr key={player.id} className="hover:bg-slate-50/80 transition-colors group cursor-pointer" onClick={() => window.open(`/player/${player.id}`, '_self')}>
                   <td className="px-8 py-5">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm italic ${index === 0 ? 'bg-warning text-white shadow-lg shadow-warning/20' :
-                        index === 1 ? 'bg-slate-300 text-slate-700' :
-                          index === 2 ? 'bg-orange-400 text-white' :
-                            'bg-slate-100 text-slate-400'
+                      index === 1 ? 'bg-slate-300 text-slate-700' :
+                        index === 2 ? 'bg-orange-400 text-white' :
+                          'bg-slate-100 text-slate-400'
                       }`}>
                       {index + 1}
                     </div>

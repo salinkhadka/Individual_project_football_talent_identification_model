@@ -27,20 +27,8 @@ function ScoutingReport() {
     finally { setLoading(false); }
   };
 
-  const handleExport = async () => {
-    try {
-      setExporting(true);
-      const response = await api.exportScoutingReport(id);
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', `scout-report-${report?.player?.name || id}.pdf`);
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (err) { alert('Export operation failed.'); }
-    finally { setExporting(false); }
+  const handleExport = () => {
+    window.print();
   };
 
   if (loading) return <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4"><div className="w-12 h-12 border-4 border-slate-200 border-t-accent rounded-full animate-spin" /><p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Loading Report...</p></div>;
@@ -52,7 +40,7 @@ function ScoutingReport() {
     <div className="space-y-6">
       {/* Action Bar */}
       <div className="flex items-center justify-between">
-        <Link to={`/player/${id}`} className="group flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors">
+        <Link to={`/player/${id}`} className="group flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors no-print">
           <div className="p-2 rounded-lg bg-white border border-slate-200 group-hover:border-slate-300">
             <ArrowLeft className="w-4 h-4" />
           </div>
@@ -60,7 +48,7 @@ function ScoutingReport() {
         </Link>
         <div className="flex items-center gap-3">
           {report.progression?.length > 1 && (
-            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2 shadow-sm">
+            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-4 py-2 shadow-sm no-print">
               <Calendar className="w-3.5 h-3.5 text-slate-400" />
               <select
                 value={id}
@@ -75,12 +63,40 @@ function ScoutingReport() {
               </select>
             </div>
           )}
-          <button onClick={handleExport} disabled={exporting} className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl hover:bg-slate-800 transition-all">
-            {exporting ? <div className="animate-spin rounded-full h-3 w-3 border-2 border-current border-t-transparent" /> : <Download className="w-4 h-4" />}
-            Export Dossier (PDF)
+          <button onClick={handleExport} className="flex items-center gap-2 px-6 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-xl hover:bg-slate-800 transition-all no-print">
+            <Download className="w-4 h-4" />
+            Export  Details (PDF)
           </button>
         </div>
       </div>
+
+      <style>{`
+        @media print {
+          .no-print { display: none !important; }
+          @page { margin: 0.8cm; size: A4; }
+          body { background: white !important; padding: 0 !important; margin: 0 !important; font-size: 9px; }
+          .container { max-width: 100% !important; width: 100% !important; padding: 0 !important; }
+          .bg-slate-950 { background: #020617 !important; color: white !important; -webkit-print-color-adjust: exact; padding: 1.5rem !important; }
+          .bg-slate-900 { background: #0f172a !important; color: white !important; -webkit-print-color-adjust: exact; }
+          .bg-white { background: white !important; -webkit-print-color-adjust: exact; }
+          .text-white { color: white !important; -webkit-print-color-adjust: exact; }
+          .text-accent { color: #3b82f6 !important; -webkit-print-color-adjust: exact; }
+          .border { border-color: #e2e8f0 !important; }
+          .shadow-2xl, .shadow-xl, .shadow-sm { shadow: none !important; box-shadow: none !important; }
+          .rounded-[2rem], .rounded-3xl, .rounded-xl { border-radius: 0.75rem !important; }
+          h1 { font-size: 2.5rem !important; margin-bottom: 0.5rem !important; }
+          .grid { display: grid !important; gap: 1rem !important; }
+          .lg\\:grid-cols-12 { grid-template-columns: repeat(12, 1fr) !important; }
+          .lg\\:col-span-8 { grid-column: span 8 / span 8 !important; }
+          .lg\\:col-span-4 { grid-column: span 4 / span 4 !important; }
+          .space-y-6 > * + * { margin-top: 1rem !important; }
+          .p-8, .p-12 { padding: 1rem !important; }
+          .md\\:grid-cols-3 { grid-template-columns: repeat(3, 1fr) !important; }
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          canvas { max-width: 100% !important; height: auto !important; max-height: 200px !important; }
+          .h-[300px] { height: 200px !important; }
+        }
+      `}</style>
 
       {/* Cinematic Identity Header */}
       <div className="bg-slate-950 rounded-[2rem] p-8 lg:p-12 text-white relative overflow-hidden shadow-2xl border border-slate-800">
@@ -124,7 +140,7 @@ function ScoutingReport() {
               </div>
               <div className="text-center">
                 <div className="text-sm font-black text-success italic">{(ratings.next_season || 0).toFixed(1)}</div>
-                <div className="text-[8px] font-black uppercase text-slate-600 mt-1">Projection</div>
+                <div className="text-[8px] font-black uppercase text-slate-600 mt-1"> Next Season Projection</div>
               </div>
             </div>
           </div>

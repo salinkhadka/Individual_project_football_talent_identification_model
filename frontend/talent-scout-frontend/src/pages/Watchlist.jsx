@@ -46,7 +46,7 @@ function Watchlist() {
     return (
       <div className="flex flex-col items-center justify-center h-96 gap-4">
         <div className="w-12 h-12 border-4 border-slate-200 border-t-accent rounded-full animate-spin" />
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Syncing Intelligence Matrix...</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Loading Scouting Shortlist...</p>
       </div>
     );
   }
@@ -64,19 +64,19 @@ function Watchlist() {
               <div className="p-2.5 rounded-xl bg-warning/20 border border-warning/30">
                 <Star className="w-5 h-5 text-warning fill-warning/20" />
               </div>
-              <h1 className="text-3xl lg:text-4xl font-black italic uppercase tracking-tight">Priority Watchlist</h1>
+              <h1 className="text-3xl lg:text-4xl font-black italic uppercase tracking-tight">Scouting Shortlist</h1>
             </div>
-            <p className="text-slate-400 text-sm font-medium max-w-md uppercase tracking-[0.15em] text-[10px]">Curated digital portfolio of high-probability development prospects.</p>
+            <p className="text-slate-400 text-sm font-medium max-w-md uppercase tracking-[0.15em] text-[10px]">Private shortlist of high-potential prospects for ongoing monitoring.</p>
           </div>
           <div className="flex items-center gap-6 bg-white/5 border border-white/10 rounded-3xl p-6 backdrop-blur-md">
             <div className="text-center">
               <div className="text-4xl font-black text-white">{watchlist.length}</div>
-              <div className="text-[10px] font-black uppercase text-slate-500 tracking-widest mt-1">Tracked Units</div>
+              <div className="text-[10px] font-black uppercase text-slate-500 tracking-widest mt-1">Players Tracked</div>
             </div>
             <div className="h-10 w-[1px] bg-slate-800" />
             <div className="text-right">
               <div className="text-lg font-black text-warning">{(watchlist.reduce((sum, p) => sum + (p.peak_potential || 0), 0) / (watchlist.length || 1)).toFixed(1)}</div>
-              <div className="text-[8px] font-black text-slate-500 uppercase tracking-tighter">Median Potential</div>
+              <div className="text-[8px] font-black text-slate-500 uppercase tracking-tighter">Average Potential</div>
             </div>
           </div>
         </div>
@@ -87,8 +87,8 @@ function Watchlist() {
           <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-8 opacity-40">
             <Star className="w-10 h-10 text-slate-300" />
           </div>
-          <h2 className="text-xl font-black text-slate-900 mb-2">Watchlist Deactivated</h2>
-          <p className="text-slate-500 text-sm max-w-sm mx-auto mb-8">Begin scouting the global database and flag priority prospects to initialize your portfolio.</p>
+          <h2 className="text-xl font-black text-slate-900 mb-2">Shortlist Deactivated</h2>
+          <p className="text-slate-500 text-sm max-w-sm mx-auto mb-8">Begin scouting the global registry and flag priority prospects to initialize your shortlist.</p>
           <Link to="/players" className="inline-flex items-center gap-2 px-8 py-4 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg">
             Open Database <ArrowRight className="w-4 h-4" />
           </Link>
@@ -96,8 +96,8 @@ function Watchlist() {
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <WatchlistKPI label="Elite Nucleus (80+)" value={watchlist.filter(p => (p.peak_potential || 0) >= 80).length} icon={Award} color="blue" />
-            <WatchlistKPI label="Development Surge" value={watchlist.filter(p => (p.peak_potential || 0) >= 70 && (p.peak_potential || 0) < 80).length} icon={Zap} color="orange" />
+            <WatchlistKPI label="Elite Prospects" value={watchlist.filter(p => (p.peak_potential || 0) >= 80).length} icon={Award} color="blue" />
+            <WatchlistKPI label="Potential Growth" value={watchlist.filter(p => (p.peak_potential || 0) >= 70 && (p.peak_potential || 0) < 80).length} icon={Zap} color="orange" />
             <WatchlistKPI label="Portfolio Momentum" value="+2.4%" icon={TrendingUp} color="success" />
           </div>
 
@@ -106,12 +106,12 @@ function Watchlist() {
               <table className="w-full">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-100">
-                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Profile Identifier</th>
-                    <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Affiliation</th>
-                    <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Status</th>
-                    <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Efficiency</th>
-                    <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Potential Ceiling</th>
-                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Operation</th>
+                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Player Profile</th>
+                    <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Club</th>
+                    <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Pos</th>
+                    <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Rating</th>
+                    <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Potential Score</th>
+                    <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">

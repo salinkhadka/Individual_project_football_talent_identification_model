@@ -31,14 +31,11 @@ const validatePlayerData = (data) => ({
   next_season_rating: parseFloat(data.next_season_rating || 0),
   matches: parseInt(data.matches || data.Matches_Played_std || 0),
   goals: parseInt(data.goals || data.Performance_Gls_std || 0),
-  // assists: parseInt(data.assists || data.Performance_Ast_std || 0),
   minutes: parseFloat(data.minutes || data.Playing_Time_Min_std || 0),
   starts: parseInt(data.starts || data.Playing_Time_Starts_std || 0),
   goals_per_90: parseFloat(data.goals_per_90 || data['Per 90 Minutes_Gls_std'] || 0),
-  // assists_per_90: parseFloat(data.assists_per_90 || data['Per 90 Minutes_Ast_std'] || 0),
   nineties: parseFloat(data.nineties || data['Playing Time_90s_std'] || 0),
   xg_per_90: parseFloat(data.xg_per_90 || data.expected_goals_per_90 || data['Per 90 Minutes_xG_std'] || 0),
-  // xa_per_90: parseFloat(data.xa_per_90 || data.expected_assists_per_90 || data['Per 90 Minutes_xAG_std'] || 0),
 });
 
 const checkDataIssues = (p) => {
@@ -270,15 +267,15 @@ function PlayerDetail() {
   if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
       <div className="w-12 h-12 border-4 border-slate-200 border-t-accent rounded-full animate-spin" />
-      <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Retrieving Player Data...</p>
+      <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Loading Player  Details...</p>
     </div>
   );
 
   if (error || !player) return (
     <div className="text-center py-20 bg-white rounded-[2rem] border border-slate-200 shadow-sm max-w-2xl mx-auto">
       <AlertCircle className="w-12 h-12 text-slate-200 mx-auto mb-6" />
-      <h2 className="text-xl font-black text-slate-900 mb-2 uppercase italic">Profile Restricted</h2>
-      <p className="text-slate-500 text-sm mb-8 uppercase font-bold">{error || 'Data corrupted or missing.'}</p>
+      <h2 className="text-xl font-black text-slate-900 mb-2 uppercase italic"> Details Locked</h2>
+      <p className="text-slate-500 text-sm mb-8 uppercase font-bold">{error || ' Details unavailable.'}</p>
       <Link to="/players" className="inline-flex items-center gap-2 px-8 py-4 bg-slate-950 text-white rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all">
         <ArrowLeft className="w-4 h-4" /> Return to Registry
       </Link>
@@ -323,12 +320,12 @@ function PlayerDetail() {
             <Star className={`w-4 h-4 ${isInWatchlist ? 'fill-white' : ''}`} />
           </button>
           <button onClick={handleRecalculate} className="flex items-center gap-2 px-6 py-3 bg-slate-950 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg">
-            <RefreshCw className="w-4 h-4" /> Synchronize ML
+            <RefreshCw className="w-4 h-4" /> Refresh Profile
           </button>
         </div>
       </div>
 
-      {/* Hero Dossier Module */}
+      {/* Hero  Details Module */}
       <div className="bg-slate-950 rounded-[2rem] p-8 lg:p-12 text-white relative overflow-hidden shadow-2xl border border-slate-800">
         <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-accent/10 to-transparent pointer-events-none" />
         <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-accent/20 rounded-full blur-[100px] pointer-events-none" />
@@ -342,7 +339,7 @@ function PlayerDetail() {
                   {activePlayerData.Season || 'Current Cycle'} Performance
                   {progression.length > 1 && (
                     <span className="ml-2 px-2 py-0.5 bg-slate-800 text-slate-300 rounded-md text-[8px] border border-slate-700">
-                      {progression.length} Seasons Tracked
+                      Multi-Season Tracker
                     </span>
                   )}
                   {activePlayerData.is_best_potential && (
@@ -366,13 +363,13 @@ function PlayerDetail() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <QuickMetric label="Matches" value={activePlayerData.matches || 0} />
               <QuickMetric label={isGK ? 'Clean Sheets' : 'Goals'} value={isGK ? (activePlayerData.clean_sheets || 0) : (activePlayerData.goals || 0)} />
-              {/* <QuickMetric label={isGK ? 'Save %' : 'Assists'} value={isGK ? (activePlayerData.SavePercentage || 0).toFixed(1) : (activePlayerData.assists || 0)} /> */}
+              <QuickMetric label={isGK ? 'CS Rate' : 'xG / 90'} value={isGK ? `${formatValue(activePlayerData.CleanSheetPercentage)}%` : formatValue(activePlayerData.xg_per_90)} />
               <QuickMetric label="Minutes" value={Math.round(activePlayerData.minutes || 0).toLocaleString()} />
             </div>
           </div>
 
           <div className="lg:col-span-4 flex flex-col items-center justify-center p-10 bg-white/5 border border-white/10 rounded-[3rem] backdrop-blur-md shadow-inner">
-            <div className="text-[10px] font-black text-accent uppercase tracking-[0.3em] mb-4">Potential Rating</div>
+            <div className="text-[10px] font-black text-accent uppercase tracking-[0.3em] mb-4">Potential Score</div>
             <div className="text-8xl font-black text-white italic tracking-tighter drop-shadow-2xl">
               {formatValue(activePlayerData.peak_potential)}
             </div>
@@ -383,7 +380,7 @@ function PlayerDetail() {
               </div>
               <div className="w-[1px] h-8 bg-white/10" />
               <div className="text-center">
-                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Projection</p>
+                <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Development Trend</p>
                 <p className="text-xl font-black text-success italic">+{formatValue(activePlayerData.next_season_rating - activePlayerData.current_rating)}</p>
               </div>
             </div>
@@ -397,18 +394,17 @@ function PlayerDetail() {
             <AlertCircle className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-sm font-black text-amber-900 uppercase tracking-tight">Active Season: Performance Perspective Required</h3>
+            <h3 className="text-sm font-black text-amber-900 uppercase tracking-tight">Active Season Analysis</h3>
             <p className="text-xs text-amber-700 font-medium mt-1 leading-relaxed">
               The <span className="font-bold">2025-26</span> season is currently in progress.
-              Because fewer matches have been played compared to full historical cycles, the machine learning predictions are based on early-trend projections.
-              Volume metrics (Total Goals/Matches) will naturally be lower until the campaign concludes.
+              Estimates are based on early-season momentum. Total volume metrics (Goals/Matches) will adjust as the campaign concludes.
             </p>
           </div>
         </div>
       )}
 
       <div className="grid lg:grid-cols-12 gap-6">
-        {/* Dossier Navigation Sidebar */}
+        {/*  Details Navigation Sidebar */}
         <div className="lg:col-span-3 space-y-4">
           <div className="bg-white rounded-[2rem] border border-slate-200 p-4 shadow-sm space-y-1">
             <TabButton id="overview" active={activeTab} set={setActiveTab} label="Performance" icon={Target} />
@@ -451,7 +447,7 @@ function PlayerDetail() {
           )}
         </div>
 
-        {/* Dynamic Dossier Content */}
+        {/* Dynamic  Details Content */}
         <div className="lg:col-span-9">
           {activeTab === 'overview' && <OverviewTab player={activePlayerData} isGK={isGK} />}
           {activeTab === 'tactical' && <TacticalTab player={activePlayerData} shots={shots} loading={loadingShots} isGK={isGK} />}
@@ -474,18 +470,11 @@ function OverviewTab({ player, isGK }) {
     <div className="grid md:grid-cols-2 gap-6">
       <StatsBlock title="Performance Metrics" icon={Target}>
         <MetricRow
-          label={isGK ? "Save Success" : "Goals per 90"}
-          value={formatValue(isGK ? (player.SavePercentage || 0) : (player.goals_per_90 || 0), '0.00')}
-        />
-        <MetricRow
-          label={isGK ? "Clean Sheet Rate" : "Assists per 90"}
-          value={formatValue(isGK ? (player.CleanSheetPercentage || 0) : (player.assists_per_90 || 0), '0.00')}
+          label={isGK ? "Clean Sheet Rate" : "Goals per 90"}
+          value={isGK ? `${formatValue(player.CleanSheetPercentage)}%` : formatValue(player.goals_per_90 || 0, '0.00')}
         />
         {!isGK && (
-          <>
-            <MetricRow label="Expected Goals (xG) / 90" value={formatValue(player.xg_per_90 || 0, '0.00')} />
-            {/* <MetricRow label="Expected Assists (xA) / 90" value={formatValue(player.xa_per_90 || 0, '0.00')} /> */}
-          </>
+          <MetricRow label="Expected Goals (xG) / 90" value={formatValue(player.xg_per_90 || 0, '0.00')} />
         )}
         {isGK && (
           <MetricRow label="Goals Against / 90" value={formatValue(player.GoalsAgainstPer90 || 0, '0.00')} />
@@ -502,11 +491,11 @@ function OverviewTab({ player, isGK }) {
 
       <StatsBlock title="Growth Profile" icon={Zap}>
         <MetricRow
-          label="Neural Development Score"
+          label="Development  Next Season Projection"
           value={formatValue(player.ml_development_score || 0)}
         />
         <MetricRow
-          label="Performance Core"
+          label="Match Impact"
           value={formatValue(player.base_performance_score || 0)}
         />
         <MetricRow
@@ -514,7 +503,7 @@ function OverviewTab({ player, isGK }) {
           value={formatValue(player.playing_time_score || 0)}
         />
         <div className="pt-4 mt-4 border-t border-slate-100 space-y-3">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Calculation Factors</p>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest px-2">Profile Weighting</p>
           <MetricRow label="Age Multiplier" value={`x${formatValue(player.age_multiplier || 1, '1.00')}`} />
           {player.age_bonus > 0 && <MetricRow label="Elite Youth Bonus" value={`+${formatValue(player.age_bonus)}`} />}
           {player.sample_penalty < 0 && <MetricRow label="Low Sample Penalty" value={`${formatValue(player.sample_penalty)}`} />}
@@ -535,7 +524,7 @@ function TacticalTab({ player, shots, loading, isGK }) {
     <div className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-sm">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h3 className="text-xl font-black text-slate-900 italic uppercase">Offensive Distribution</h3>
+          <h3 className="text-xl font-black text-slate-900 italic uppercase">Attacking Profile</h3>
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Spatial Analysis of Key Technical Actions</p>
         </div>
         <div className="flex items-center gap-2">

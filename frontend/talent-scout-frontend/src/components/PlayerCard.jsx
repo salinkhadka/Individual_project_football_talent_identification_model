@@ -28,9 +28,9 @@ function PlayerCard({ player, onClose }) {
   // Get minutes - prefer raw columns, avoid scaled
   const getMinutes = () => {
     const minutes = safeNumber(
-      player['Playing Time_Min'] ?? 
-      player['Playing Time_Min_raw'] ?? 
-      player.minutes ?? 
+      player['Playing Time_Min'] ??
+      player['Playing Time_Min_raw'] ??
+      player.minutes ??
       0
     );
     return Math.round(minutes);
@@ -39,8 +39,8 @@ function PlayerCard({ player, onClose }) {
   // Get matches - prefer display column, then raw, then derive from minutes
   const getMatches = () => {
     const matches = safeNumber(
-      player['matches_played_display'] ?? 
-      player['Playing Time_MP_raw'] ?? 
+      player['matches_played_display'] ??
+      player['Playing Time_MP_raw'] ??
       player['Playing Time_MP'] ??
       Math.round(getMinutes() / 90)
     );
@@ -84,8 +84,8 @@ function PlayerCard({ player, onClose }) {
             <div className="text-6xl font-bold text-yellow-300 drop-shadow-lg">
               {Math.round(potential)}
             </div>
-            <div className="text-white/90 text-sm uppercase tracking-wider font-semibold mt-1">
-              Potential
+            <div className="text-white/90 text-[10px] uppercase tracking-wider font-semibold mt-1">
+              Potential Score
             </div>
           </div>
           <div className="bg-white/25 backdrop-blur-md px-5 py-3 rounded-xl border-2 border-white/40">
@@ -110,29 +110,29 @@ function PlayerCard({ player, onClose }) {
         {/* Stats Grid */}
         <div className="relative mx-6 mb-6 bg-white/20 backdrop-blur-md rounded-2xl p-6 border-2 border-white/40">
           <div className="grid grid-cols-3 gap-4">
-            <StatItem 
-              label="Goals/90" 
-              value={goalsPer90.toFixed(2)} 
+            <StatItem
+              label="Goals/90"
+              value={goalsPer90.toFixed(2)}
             />
-            <StatItem 
-              label="Current" 
-              value={current.toFixed(1)} 
+            <StatItem
+              label="Rating"
+              value={current.toFixed(1)}
             />
-            <StatItem 
-              label="Next Season" 
-              value={nextSeason.toFixed(1)} 
+            <StatItem
+              label=" Next Season Projection"
+              value={nextSeason.toFixed(1)}
             />
-            <StatItem 
-              label="Minutes" 
-              value={minutes} 
+            <StatItem
+              label="Minutes"
+              value={minutes}
             />
-            <StatItem 
-              label="Matches" 
-              value={matches} 
+            <StatItem
+              label="Matches"
+              value={matches}
             />
-            <StatItem 
-              label="Starts" 
-              value={Math.round(starts)} 
+            <StatItem
+              label="Starts"
+              value={Math.round(starts)}
             />
           </div>
         </div>
@@ -153,7 +153,7 @@ function PlayerCard({ player, onClose }) {
 
         {/* Footer */}
         <div className="relative bg-white/20 backdrop-blur-md py-4 text-center border-t-2 border-white/40">
-          <p className="text-white/90 text-sm font-medium">Talent Scout • AI Analysis</p>
+          <p className="text-white/90 text-sm font-medium">Professional Scouting Analysis</p>
         </div>
       </div>
 

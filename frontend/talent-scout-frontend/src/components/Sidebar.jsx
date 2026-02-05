@@ -26,7 +26,7 @@ function Sidebar() {
                     </div>
                     <div>
                         <h1 className="text-lg font-bold text-white tracking-tight">SCOUT<span className="text-accent">PRO</span></h1>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">U19 Analytics</p>
+                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">U19 Scouting</p>
                     </div>
                 </div>
             </div>
@@ -50,7 +50,7 @@ function Sidebar() {
             </nav>
 
             {/* Analytics Badge */}
-            <div className="p-4 mx-4 mb-6 bg-slate-900 border border-slate-800 rounded-xl">
+            {/* <div className="p-4 mx-4 mb-6 bg-slate-900 border border-slate-800 rounded-xl">
                 <div className="flex items-center gap-3 mb-2">
                     <Activity className="w-4 h-4 text-accent" />
                     <span className="text-xs font-bold text-white">Live Engine</span>
@@ -59,7 +59,7 @@ function Sidebar() {
                 <div className="w-full bg-slate-800 h-1 rounded-full overflow-hidden">
                     <div className="w-4/5 h-full bg-accent animate-pulse" />
                 </div>
-            </div>
+            </div> */}
 
             {/* Footer Profile */}
             <div className="p-4 border-t border-slate-800 flex items-center gap-3 group">
@@ -67,12 +67,12 @@ function Sidebar() {
                     <span className="text-sm font-bold text-white">AD</span>
                 </div>
                 <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-white truncate">Admin Account</p>
-                    <p className="text-[10px] text-slate-500 uppercase tracking-tight">System Analyst</p>
+                    <p className="text-sm font-bold text-white truncate">Admin User</p>
+                    <p className="text-[10px] text-slate-500 uppercase tracking-tight">Lead Scouting Analyst</p>
                 </div>
-                <button className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-500 hover:text-red-400 transition-colors">
+                {/* <button className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-500 hover:text-red-400 transition-colors">
                     <LogOut className="w-4 h-4" />
-                </button>
+                </button> */}
             </div>
         </aside>
     );
