@@ -7,6 +7,21 @@ import joblib
 import os
 from typing import Dict, Tuple
 
+# Feature groups for ML model (synchronized with model/config_new.py)
+CORE_FEATURES = [
+    'Age', 'Matches', 'Starts', 'Minutes', 'Goals', 'GoalsPer90',
+    'Assists', 'AssistsPer90', 'xG', 'xA', 'Shots', 'ShotsOnTarget',
+    'PassesCompleted', 'PassCompletionPct', 'ProgressivePasses',
+    'Tackles', 'Interceptions', 'DribblesCompleted', 'Touches'
+]
+
+ENGINEERED_FEATURES = [
+    'MinutesPerMatch', 'GoalsPerMatch', 'StartPercentage',
+    'CompletionRate', 'AttackingContribution', 'DefensiveContribution',
+    'PhysicalityScore', 'ConsistencyScore', 'AgeBonus',
+    'PositionAdjustedRating'
+]
+
 
 class PotentialCalculator:
     """Calculate player potential using hybrid model"""
@@ -16,10 +31,11 @@ class PotentialCalculator:
         self.model = None
         self.scaler = None
         
+        # Point to the correct model names from config_new.py
         if model_path is None:
-            model_path = os.path.join('..', 'saved_models', 'youth_potential_model.pkl')
+            model_path = os.path.join('..', 'model', 'saved_models', 'potential_predictor.pkl')
         if scaler_path is None:
-            scaler_path = os.path.join('..', 'saved_models', 'feature_scaler.pkl')
+            scaler_path = os.path.join('..', 'model', 'saved_models', 'feature_scaler.pkl')
         
         # Try to load model
         if os.path.exists(model_path):
@@ -28,6 +44,8 @@ class PotentialCalculator:
                 print(f"✓ ML model loaded from {model_path}")
             except Exception as e:
                 print(f"⚠️  ML model failed to load: {e}")
+        else:
+            print(f"❌ Model file NOT FOUND: {model_path}")
         
         if os.path.exists(scaler_path):
             try:
@@ -35,6 +53,8 @@ class PotentialCalculator:
                 print(f"✓ Scaler loaded from {scaler_path}")
             except Exception as e:
                 print(f"⚠️  Scaler failed to load: {e}")
+        else:
+            print(f"❌ Scaler file NOT FOUND: {scaler_path}")
         
         # Benchmarks (same as in performance_calculator_fixed.py)
         self.elite_benchmarks = {
@@ -301,29 +321,61 @@ class PotentialCalculator:
         return min(age_score + consistency_bonus, 100)
     
     def _extract_ml_features(self, player_data: Dict) -> np.ndarray:
-        """Extract features for ML model"""
-        minutes = player_data.get('minutes', 0) or 0
-        goals = player_data.get('goals', 0) or 0
-        assists = player_data.get('assists', 0) or 0
+        """Extract and engineer features for ML prediction to match training (29 features)."""
+        # Exact mirror of model/performance_calculator_fixed.py engineering logic
+        features_dict = {}
         
-        goals_per_90 = (goals / minutes * 90) if minutes > 0 else 0
-        assists_per_90 = (assists / minutes * 90) if minutes > 0 else 0
+        # Standardize keys to match model logic (Case sensitive)
+        row = {
+            'Age': player_data.get('age', 18),
+            'Matches': player_data.get('matches', 1),
+            'Starts': player_data.get('starts', 0),
+            'Minutes': player_data.get('minutes', 0),
+            'Goals': player_data.get('goals', 0),
+            'GoalsPer90': player_data.get('goals_per_90', 0),
+            'Assists': player_data.get('assists', 0),
+            'AssistsPer90': player_data.get('assists_per_90', 0),
+            'xG': (player_data.get('xg_per_90', 0) or 0) * (player_data.get('minutes', 0) or 0) / 90,
+            'xA': (player_data.get('xa_per_90', 0) or 0) * (player_data.get('minutes', 0) or 0) / 90,
+            'Shots': 0,
+            'ShotsOnTarget': 0,
+            'PassesCompleted': 0,
+            'PassCompletionPct': player_data.get('save_percentage', 75.0) if player_data.get('position') == 'GK' else 75.0,
+            'ProgressivePasses': 0,
+            'Tackles': 0,
+            'Interceptions': 0,
+            'DribblesCompleted': 0,
+            'Touches': 0,
+            'CurrentAbility': 65  # Fallback current ability
+        }
         
-        features = [
-            player_data.get('age', 18) or 18,
-            player_data.get('matches', 0) or 0,
-            player_data.get('starts', 0) or 0,
-            minutes,
-            goals,
-            goals_per_90,
-            assists,
-            assists_per_90,
-            (player_data.get('xg_per_90', 0) or 0) * minutes / 90 if minutes > 0 else 0,
-            (player_data.get('xa_per_90', 0) or 0) * minutes / 90 if minutes > 0 else 0,
-            0, 0, 0, 75, 0, 0, 0, 0, 0, 0
-        ]
+        # 1. Base Variables
+        matches = row['Matches']
+        if matches == 0: matches = 1
+        minutes = row['Minutes']
+        goals = row['Goals']
+        assists = row['Assists']
         
-        # Ensure 20 features
-        features = features[:20] + [0] * max(0, 20 - len(features))
+        # 2. Map Core Features (19 features)
+        for feat in CORE_FEATURES:
+            features_dict[feat] = row.get(feat, 0)
+            
+        # 3. Derive Engineered Features
+        features_dict['MinutesPerMatch'] = minutes / matches
+        features_dict['GoalsPerMatch'] = goals / matches
+        features_dict['StartPercentage'] = row['Starts'] / matches
+        features_dict['CompletionRate'] = row['PassCompletionPct'] / 100.0
+        features_dict['AttackingContribution'] = goals + assists
+        features_dict['DefensiveContribution'] = row['Tackles'] + row['Interceptions']
+        features_dict['PhysicalityScore'] = 0 
+        features_dict['ConsistencyScore'] = min(max(minutes / (matches * 90), 0), 1)
+        features_dict['AgeBonus'] = max(0, 25 - row['Age']) / 10
+        features_dict['PositionAdjustedRating'] = row['CurrentAbility'] - 50
         
-        return np.array(features).reshape(1, -1)
+        # 4. Assemble in correct order
+        all_feature_names = CORE_FEATURES + ENGINEERED_FEATURES
+        feature_list = []
+        for feat in all_feature_names:
+            feature_list.append(features_dict.get(feat, 0))
+            
+        return np.array(feature_list).reshape(1, -1)
