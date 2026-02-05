@@ -13,9 +13,9 @@ function Layout() {
         {/* Top Header / Context Bar */}
         <header className="h-16 border-b border-slate-200 bg-white sticky top-0 z-40 flex items-center justify-between px-8">
           <div className="flex items-center gap-4">
-            <h2 className="text-slate-500 font-medium text-sm">Youth Football Talent Identification System</h2>
+            <h2 className="text-slate-500 font-medium text-sm">Youth Football Scouting System</h2>
             <div className="h-4 w-[1px] bg-slate-200" />
-            <span className="badge-pro bg-slate-100 text-slate-600">v2.1.0-STABLE</span>
+            <span className="badge-pro bg-slate-100 text-slate-600"> </span>
           </div>
 
           <div className="flex items-center gap-6">
@@ -41,8 +41,8 @@ function Layout() {
             </p>
             <div className="flex items-center gap-4 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
               <span className="hover:text-accent cursor-pointer">Documentation</span>
-              <span className="hover:text-accent cursor-pointer">Model Ethics</span>
-              <span className="hover:text-accent cursor-pointer">Contact Supervisor</span>
+              <span className="hover:text-accent cursor-pointer">Data Ethics</span>
+              <span className="hover:text-accent cursor-pointer">Contact Admin</span>
             </div>
           </div>
         </footer>
