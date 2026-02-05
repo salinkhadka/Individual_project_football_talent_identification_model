@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Trophy, Users, Target, BarChart3,
-  Search, Award, ArrowRight, 
-  Activity, Zap, Crosshair,Radar,Heart
+  Search, Award, ArrowRight,
+  Activity, Zap, Radar, Heart
 } from 'lucide-react';
 import api from '../services/api';
 
@@ -56,72 +56,86 @@ function Home() {
   }
 
   return (
-    <div className="space-y-10">
-      {/* Dashboard Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-black text-slate-900 tracking-tight">System Dashboard</h1>
-          <p className="text-slate-500 font-medium">Global Bundesliga U19 Recruitment & Development Overview</p>
+    <div className="space-y-8 pb-12">
+      {/* Cinematic Header & Hero Section Combined */}
+      <div className="relative rounded-[2.5rem] overflow-hidden bg-slate-950 border border-slate-800 shadow-2xl">
+        {/* Animated Background Elements */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-accent/30 rounded-full blur-[120px] animate-pulse" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-600/20 rounded-full blur-[120px]" />
+          <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.05) 1px, transparent 0)', backgroundSize: '40px 40px' }} />
         </div>
-        <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-widest bg-white px-4 py-2 rounded-lg border border-slate-200 shadow-sm">
-          <Activity className="w-3.5 h-3.5 text-success" />
-          Last Index: {new Date().toLocaleDateString()} • {allPlayersCount(stats)} Profiles
-        </div>
-      </div>
 
-      {/* Hero Analytics Banner */}
-      <div className="relative group">
-        <div className="absolute -inset-1 bg-gradient-to-r from-accent to-indigo-600 rounded-2xl blur opacity-15 group-hover:opacity-25 transition duration-1000"></div>
-        <div className="relative bg-slate-950 rounded-2xl p-10 overflow-hidden border border-slate-800 shadow-2xl">
-          {/* Abstract Grid Pattern */}
-          <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#3b82f6 1px, transparent 1px)', backgroundSize: '30px 30px' }}></div>
-
-          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="relative z-10 p-8 lg:p-12">
+          {/* Top Bar inside Hero */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
             <div>
-              <div className="flex items-center gap-2 mb-6">
-                <div className="px-3 py-1 bg-accent/20 border border-accent/30 rounded-full">
-                  <span className="text-accent text-[10px] font-black uppercase tracking-widest">Predictive Model v2.4</span>
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-2 h-2 rounded-full bg-accent animate-ping" />
+                <span className="text-[10px] font-black uppercase tracking-[0.3em] text-accent/80">Live Scouting Intelligence</span>
+              </div>
+              <h1 className="text-4xl lg:text-5xl font-black text-white italic tracking-tighter uppercase leading-none">
+                Scouting <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent to-indigo-400">Dashboard</span>
+              </h1>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="px-5 py-3 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 flex items-center gap-4">
+                <div className="text-center">
+                  <div className="text-xl font-black text-white">{stats?.total_players || 0}</div>
+                  <div className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Profiles</div>
                 </div>
-                <div className="px-3 py-1 bg-slate-800 rounded-full">
-                  <span className="text-slate-400 text-[10px] font-bold uppercase tracking-widest">Bundesliga Exclusive</span>
+                <div className="h-8 w-[1px] bg-white/10" />
+                <div className="text-center">
+                  <div className="text-xl font-black text-accent">{(stats?.max_potential || 0).toFixed(1)}</div>
+                  <div className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Peak Pot.</div>
                 </div>
               </div>
+              <button onClick={() => loadData()} className="p-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 transition-all text-white active:scale-95">
+                <Activity className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
 
-              <h2 className="text-4xl md:text-5xl font-black text-white leading-tight mb-6 tracking-tighter">
-                IDENTIFY THE NEXT <span className="text-accent">ELITE PROSPECTS</span>
+          {/* Hero Content */}
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div className="space-y-8">
+              <h2 className="text-2xl lg:text-3xl font-bold text-slate-200 leading-tight">
+                Identifying the elite <span className="text-white underline decoration-accent decoration-4 underline-offset-4">U19 talents</span> across global football ecosystems.
               </h2>
-              <p className="text-slate-400 text-lg mb-10 max-w-xl leading-relaxed">
-                Utilizing XGBoost regression on 50+ performance metrics to predict the development
-                trajectory of U19 talents with <span className="text-white font-bold">87% historical accuracy.</span>
+              <p className="text-slate-400 text-sm lg:text-base max-w-lg leading-relaxed font-medium">
+                Our proprietary analyzer utilizes multi-dimensional performance metrics to project
+                future development trajectories with high reliability.
               </p>
 
-              <div className="flex flex-wrap gap-4">
-                <Link
-                  to="/players"
-                  className="px-8 py-4 bg-accent hover:bg-blue-600 text-white rounded-xl font-bold transition-all shadow-lg shadow-accent/25 flex items-center gap-3 active:scale-95"
-                >
-                  <Search className="w-5 h-5" />
-                  Launch Scout Search
+              <div className="flex flex-wrap gap-4 pt-4">
+                <Link to="/players" className="group flex items-center gap-3 px-8 py-4 bg-accent hover:bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-[11px] transition-all shadow-xl shadow-accent/20 active:scale-95">
+                  <Search className="w-4 h-4" />
+                  Launch Scout Registry
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </Link>
-                <Link
-                  to="/analytics"
-                  className="px-8 py-4 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-all flex items-center gap-3 border border-slate-700 active:scale-95"
-                >
-                  <BarChart3 className="w-5 h-5" />
-                  View Global Trends
+                <Link to="/analytics" className="flex items-center gap-3 px-8 py-4 bg-white/5 hover:bg-white/10 text-white rounded-2xl border border-white/10 font-black uppercase tracking-widest text-[11px] transition-all active:scale-95">
+                  <BarChart3 className="w-4 h-4" />
+                  Market Trends
                 </Link>
               </div>
             </div>
 
-            {/* Visual Teaser */}
-            <div className="hidden lg:flex justify-end pr-10">
-              <div className="relative w-80 h-80 flex items-center justify-center">
-                <div className="absolute inset-0 border-[16px] border-slate-900 rounded-full animate-[spin_20s_linear_infinite]" />
-                <div className="absolute inset-4 border-2 border-dashed border-slate-800 rounded-full animate-[spin_15s_linear_infinite_reverse]" />
-                <div className="bg-slate-900 w-48 h-48 rounded-3xl flex flex-col items-center justify-center border border-accent/20 rotate-12 shadow-2xl">
-                  <Crosshair className="w-10 h-10 text-accent mb-2" />
-                  <span className="text-3xl font-black text-white">{(stats?.max_potential || 0).toFixed(1)}</span>
-                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Highest Potential</span>
+            {/* Interactive Visual Element */}
+            <div className="hidden lg:flex justify-center relative">
+              <div className="w-72 h-72 rounded-[3rem] bg-gradient-to-br from-accent/20 to-indigo-500/10 border border-white/10 flex items-center justify-center relative group">
+                <div className="absolute inset-4 border border-dashed border-white/5 rounded-[2.5rem] animate-[spin_20s_linear_infinite]" />
+                <div className="absolute -top-6 -right-6 w-24 h-24 bg-slate-900 rounded-3xl border border-white/10 flex flex-col items-center justify-center shadow-2xl rotate-12 group-hover:rotate-0 transition-transform duration-500">
+                  <Zap className="w-6 h-6 text-warning mb-1" />
+                  <span className="text-xs font-black text-white">ELITE</span>
+                  <span className="text-[10px] text-slate-500 font-bold">{stats?.elite_count || 0}</span>
+                </div>
+                <div className="text-center space-y-2">
+                  <Trophy className="w-12 h-12 text-accent mx-auto mb-4" />
+                  <div className="text-5xl font-black text-white italic tracking-tighter">
+                    {stats?.avg_potential?.toFixed(1) || '0.0'}
+                  </div>
+                  <div className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">League Benchmark</div>
                 </div>
               </div>
             </div>
@@ -129,165 +143,209 @@ function Home() {
         </div>
       </div>
 
-      {/* Core KPIs */}
+      {/* Modern Action Bar */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <KPIBox
-          icon={<Users className="w-5 h-5" />}
-          label="Tracked Prospects"
-          value={stats?.total_players || 0}
-          trend="+12% vs LY"
-          color="accent"
+        <ActionTile
+          title="Comparison Tool"
+          desc="Tactical head-to-head analysis."
+          icon={Radar}
+          link="/compare"
+          color="blue"
         />
-        <KPIBox
-          icon={<Zap className="w-5 h-5" />}
-          label="Avg Rating (Current)"
-          value={stats?.avg_potential?.toFixed(1) || '0.0'}
-          trend="League Norm"
-          color="success"
+        <ActionTile
+          title="Shortlist"
+          desc="Track identified priority targets."
+          icon={Heart}
+          link="/watchlist"
+          color="rose"
         />
-        <KPIBox
-          icon={<Trophy className="w-5 h-5" />}
-          label="Elite Class"
-          value={stats?.elite_count || 0}
-          trend={`${((stats?.elite_count / stats?.total_players) * 100).toFixed(1)}% of pool`}
-          color="warning"
+        <ActionTile
+          title="Top 100"
+          desc="The definitive elite rankings."
+          icon={Award}
+          link="/rankings"
+          color="amber"
         />
-        <KPIBox
-          icon={<Target className="w-5 h-5" />}
-          label="Conversion Ratio"
-          value="4.2"
-          unit="xG/Goal"
-          trend="Top Tier"
-          color="indigo-500"
-        />
+        <div className="bg-white rounded-3xl border border-slate-200 p-6 flex flex-col justify-center shadow-sm">
+          <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Systems Status</div>
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div className="h-full bg-success w-[94%]" />
+            </div>
+            <span className="text-[10px] font-black text-slate-900 italic">94% FIDELITY</span>
+          </div>
+        </div>
       </div>
 
-      {/* Main Insights Layout */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* Top Prospects Table */}
-        <div className="xl:col-span-2 card-analytics overflow-hidden">
-          <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-            <div>
-              <h3 className="text-lg font-black text-slate-900 flex items-center gap-2">
-                <Award className="w-5 h-5 text-warning" />
-                Elite Prospect Rankings
-              </h3>
-              <p className="text-xs text-slate-500 font-medium">Highest predicted potential for 2024/25 transition</p>
-            </div>
-            <Link to="/rankings" className="text-accent text-[11px] font-bold uppercase tracking-widest flex items-center gap-1 hover:underline">
-              Full List <ArrowRight className="w-3 h-3" />
+      {/* Registry Preview Section */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-stretch">
+        <div className="xl:col-span-2 space-y-6 flex flex-col min-w-0">
+          <div className="flex items-center justify-between px-4">
+            <h3 className="text-xl font-black text-slate-900 italic uppercase tracking-tight flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-slate-950 flex items-center justify-center text-white">
+                <Users className="w-4 h-4" />
+              </div>
+              Elite Registry Preview
+            </h3>
+            <Link to="/players" className="text-[10px] font-black uppercase text-accent hover:underline flex items-center gap-2">
+              View All Profiles <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-slate-50/50 border-b border-slate-100">
-                  <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Index</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Player Profile</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Club</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pos</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Potential</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Gap</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {topPlayers.map((player, idx) => (
-                  <tr key={player.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-6 py-4">
-                      <span className="text-xs font-bold text-slate-400">#{idx + 1}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Link to={`/player/${player.id}`} className="group-hover:text-accent transition-colors">
-                        <div className="text-sm font-bold text-slate-900">{player.Player}</div>
-                        <div className="text-[10px] text-slate-400 font-medium uppercase tracking-tighter">Age: {player.Age_std || player.Age} • {player.Nation_std}</div>
-                      </Link>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 bg-slate-100 rounded flex items-center justify-center text-[10px] font-bold">{player.Squad_std?.[0]}</div>
-                        <span className="text-xs font-medium text-slate-600">{player.Squad_std}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <PositionBadge position={player.Pos_std} />
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <div className="text-sm font-black text-slate-900">{(player.peak_potential || 0).toFixed(1)}</div>
-                        <div className="w-12 bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                          <div className="bg-accent h-full" style={{ width: `${(player.peak_potential / 100) * 100}%` }} />
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-[11px] font-black text-success">
-                        +{(player.peak_potential - player.current_rating).toFixed(1)}
-                      </span>
-                    </td>
+
+          <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden flex-1">
+            <div className="overflow-x-auto min-w-0">
+              <table className="w-full text-left table-fixed">
+                <thead>
+                  <tr className="bg-slate-50/50 border-b border-slate-100">
+                    <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest w-1/3">Profile</th>
+                    <th className="px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest w-1/4">Affiliation</th>
+                    <th className="px-4 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center w-20">Pos</th>
+                    <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Potential Score</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {topPlayers.map((player, idx) => (
+                    <tr key={player.id} className="hover:bg-slate-50/80 transition-all group cursor-pointer" onClick={() => window.open(`/player/${player.id}`, '_self')}>
+                      <td className="px-6 py-4 truncate">
+                        <div className="flex items-center gap-4">
+                          <div className="w-8 h-8 flex-shrink-0 rounded-lg bg-slate-950 flex items-center justify-center text-white text-[10px] font-black group-hover:bg-accent transition-colors">
+                            {idx + 1}
+                          </div>
+                          <div className="min-w-0">
+                            <div className="text-sm font-black text-slate-900 group-hover:text-accent transition-colors truncate">{player.Player}</div>
+                            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-tighter truncate">Age {player.Age_std || player.Age} • {player.Nation_std}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="text-[10px] font-black text-slate-500 uppercase italic tracking-tight truncate">{player.Squad_std}</div>
+                      </td>
+                      <td className="px-4 py-4">
+                        <div className="flex justify-center">
+                          <PositionBadge position={player.Pos_std} />
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex flex-col items-end gap-1.5 min-w-0">
+                          <div className="flex items-center gap-2 whitespace-nowrap">
+                            <span className="text-sm font-black text-slate-900 italic tracking-tighter">{(player.peak_potential || 0).toFixed(1)}</span>
+                            <span className="text-[10px] font-black text-success">
+                              +{(player.peak_potential - player.current_rating).toFixed(1)}
+                            </span>
+                          </div>
+                          <div className="w-16 bg-slate-100 h-1 rounded-full overflow-hidden">
+                            <div className="bg-accent h-full" style={{ width: `${(player.peak_potential / 100) * 100}%` }} />
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
-        {/* Action Sidebar */}
-        <div className="space-y-6">
-          <ActionCard
-            title="Comparison Engine"
-            desc="Head-to-head tactical comparison of multiple player profiles."
-            icon={<Radar className="w-6 h-6" />}
-            link="/compare"
-          />
-          <ActionCard
-            title="Shortlist Radar"
-            desc="Track development progress of your bookmarked prospects."
-            icon={<Heart className="w-6 h-6" />}
-            link="/watchlist"
-          />
-          <div className="card-analytics p-6 bg-slate-950 border-slate-800">
-            <h4 className="text-white font-black text-sm mb-4 uppercase tracking-widest">Model Fidelity</h4>
-            <div className="space-y-4">
-              <FidelityBar label="Data Integrity" value={98} />
-              <FidelityBar label="Prediction Confidence" value={87} />
-              <FidelityBar label="Sample Coverage" value={92} />
+        {/* Prime Prospect Spotlight */}
+        <div className="flex flex-col min-w-0">
+          <div className="bg-slate-950 rounded-[2.5rem] p-8 text-white relative overflow-hidden h-full flex flex-col border border-slate-800 shadow-2xl group cursor-pointer" onClick={() => topPlayers[0] && window.open(`/player/${topPlayers[0].id}`, '_self')}>
+            <div className="absolute top-0 right-0 w-48 h-48 bg-accent/20 rounded-full blur-[80px] group-hover:bg-accent/30 transition-all duration-700" />
+
+            <div className="relative z-10 flex flex-col h-full">
+              <div className="flex items-center gap-3 mb-8">
+                <div className="p-2 bg-warning/20 rounded-lg border border-warning/30">
+                  <Award className="w-4 h-4 text-warning" />
+                </div>
+                <h4 className="text-xs font-black uppercase tracking-[0.2em] italic text-warning">Prime Prospect Spotlight</h4>
+              </div>
+
+              {topPlayers[0] ? (
+                <div className="space-y-6 flex-1 flex flex-col">
+                  <div className="space-y-2">
+                    <div className="text-4xl lg:text-5xl font-black italic tracking-tighter uppercase leading-none text-white group-hover:text-accent transition-colors">
+                      {topPlayers[0].Player.split(' ').pop()}
+                    </div>
+                    <div className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+                      {topPlayers[0].Squad_std} • {topPlayers[0].Age_std || topPlayers[0].Age} Years
+                    </div>
+                  </div>
+
+                  <div className="py-6 border-y border-white/5 flex items-center justify-between">
+                    <div>
+                      <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Potential Score</div>
+                      <div className="text-4xl font-black text-accent italic">{(topPlayers[0].peak_potential || 0).toFixed(1)}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Position</div>
+                      <div className="text-xl font-black text-white italic">{topPlayers[0].Pos_std}</div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 pt-4">
+                    <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest">
+                      <span className="text-slate-500">Recruitability Index</span>
+                      <span className="text-success">HIGH</span>
+                    </div>
+                    <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-accent to-indigo-500" style={{ width: '88%' }} />
+                    </div>
+                  </div>
+
+                  <div className="mt-auto pt-8">
+                    <div className="inline-flex items-center gap-2 text-[10px] font-black text-white uppercase tracking-widest group-hover:gap-4 transition-all">
+                      View  Details <ArrowRight className="w-4 h-4 text-accent" />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center flex-1 text-slate-500">
+                  <Users className="w-12 h-12 mb-4 opacity-20" />
+                  <p className="text-[10px] font-black uppercase tracking-widest">Awaiting Registry Data...</p>
+                </div>
+              )}
             </div>
-            <p className="text-[10px] text-slate-500 mt-6 font-medium leading-relaxed italic">
-              Confidence scores are derived from standard error of estimate (SEE)
-              across validation splits.
-            </p>
           </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes loading {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(250%); }
+        }
+      `}</style>
     </div>
   );
 }
 
 // Sub-components
-function KPIBox({ icon, label, value, trend, color, unit }) {
-  const colorMap = {
-    accent: 'bg-accent/10 text-accent border-accent/20',
-    success: 'bg-success/10 text-success border-success/20',
-    warning: 'bg-warning/10 text-warning border-warning/20',
-    'indigo-500': 'bg-indigo-500/10 text-indigo-500 border-indigo-500/20'
+function ActionTile({ title, desc, icon: Icon, link, color }) {
+  const themes = {
+    blue: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
+    rose: 'text-rose-500 bg-rose-500/10 border-rose-500/20',
+    amber: 'text-amber-500 bg-amber-500/10 border-amber-500/20'
   };
 
   return (
-    <div className="card-analytics p-6">
-      <div className="flex items-start justify-between mb-4">
-        <div className={`p-2.5 rounded-xl border ${colorMap[color] || colorMap.accent}`}>
-          {icon}
-        </div>
-        <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 bg-slate-50 px-2 py-1 rounded border border-slate-100">
-          {trend}
-        </div>
+    <Link to={link} className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm hover:border-accent group transition-all">
+      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-all group-hover:scale-110 ${themes[color]}`}>
+        <Icon className="w-6 h-6" />
       </div>
-      <div>
-        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1">{label}</p>
-        <div className="flex items-baseline gap-1">
-          <span className="text-3xl font-black text-slate-900 tracking-tighter">{value}</span>
-          {unit && <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{unit}</span>}
-        </div>
+      <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight mb-1">{title}</h4>
+      <p className="text-[11px] text-slate-500 leading-tight font-medium uppercase tracking-tighter">{desc}</p>
+    </Link>
+  );
+}
+
+function FidelityCard({ label, value }) {
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-between text-[10px] font-black uppercase italic tracking-widest">
+        <span className="text-slate-500">{label}</span>
+        <span className="text-white">{value}%</span>
+      </div>
+      <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+        <div className="h-full bg-white/20" style={{ width: `${value}%` }} />
       </div>
     </div>
   );
@@ -305,38 +363,6 @@ function PositionBadge({ position }) {
       {position}
     </span>
   );
-}
-
-function ActionCard({ title, desc, icon, link }) {
-  return (
-    <Link to={link} className="card-analytics p-6 flex items-start gap-4 hover:border-accent group transition-all">
-      <div className="p-3 bg-slate-50 rounded-xl group-hover:bg-accent/10 group-hover:text-accent transition-colors">
-        {icon}
-      </div>
-      <div>
-        <h4 className="text-sm font-black text-slate-900 group-hover:text-accent transition-colors uppercase tracking-tight">{title}</h4>
-        <p className="text-xs text-slate-500 leading-relaxed mt-1">{desc}</p>
-      </div>
-    </Link>
-  );
-}
-
-function FidelityBar({ label, value }) {
-  return (
-    <div className="space-y-1.5">
-      <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
-        <span className="text-slate-400">{label}</span>
-        <span className="text-white">{value}%</span>
-      </div>
-      <div className="h-1 bg-slate-800 rounded-full overflow-hidden">
-        <div className="h-full bg-accent" style={{ width: `${value}%` }} />
-      </div>
-    </div>
-  );
-}
-
-function allPlayersCount(stats) {
-  return stats?.total_players || 0;
 }
 
 export default Home;
