@@ -87,7 +87,7 @@ function Shotmap() {
       {/* Navigation & Context */}
       <div className="flex items-center justify-between">
         <Link to={`/player/${id}`} className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-accent transition-colors">
-          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" /> Dossier Exit
+          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />  Details Exit
         </Link>
         <div className="flex items-center gap-2 text-[9px] font-black text-slate-400 uppercase tracking-tighter">
           <span className="w-2 h-2 rounded-full bg-accent animate-pulse" /> Precision Engine Active
