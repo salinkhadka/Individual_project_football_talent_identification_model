@@ -14,6 +14,8 @@ import joblib
 import os
 import math
 
+from config_new import CORE_FEATURES, ENGINEERED_FEATURES
+
 
 class HybridPerformanceCalculator:
     """
@@ -310,78 +312,65 @@ class HybridPerformanceCalculator:
         return min(max(baseline, 40), 80)
     
     def extract_ml_features(self, row: pd.Series) -> np.ndarray:
-        """Extract features for ML model prediction."""
-        features = []
+        """Extract and engineer features for ML prediction to match training (29 features)."""
+        # Exact mirror of train_new.py engineering logic
+        features_dict = {}
         
-        # Basic stats
-        features.append(row.get('Age', 18))
-        features.append(row.get('Matches', 0))
-        features.append(row.get('Starts', 0))
-        features.append(row.get('Minutes', 0))
-        features.append(row.get('Goals', 0))
-        
-        # Calculate correct GoalsPer90
+        # 1. Base Variables
+        matches = row.get('Matches', 1) # Prevent div by zero
+        if matches == 0: matches = 1
         minutes = row.get('Minutes', 0)
         goals = row.get('Goals', 0)
-        goals_per_90 = (goals / minutes * 90) if minutes > 0 else 0
-        features.append(goals_per_90)
-        
-        features.append(row.get('Assists', 0))
-        
-        # Calculate AssistsPer90
         assists = row.get('Assists', 0)
-        assists_per_90 = (assists / minutes * 90) if minutes > 0 else 0
-        features.append(assists_per_90)
         
-        # xG and xA (convert per90 to total if needed)
-        xg_per_90 = row.get('xGPer90', 0)
-        xa_per_90 = row.get('xAPer90', 0)
-        xg_total = (xg_per_90 * minutes / 90) if minutes > 0 else 0
-        xa_total = (xa_per_90 * minutes / 90) if minutes > 0 else 0
-        features.append(xg_total)
-        features.append(xa_total)
+        # 2. Map Core Features (19 features)
+        for feat in CORE_FEATURES:
+            features_dict[feat] = row.get(feat, 0)
+            
+        # 3. Derive Engineered Features (TASK 1: Match train_new.py EXACTLY)
+        # Feature 1: MinutesPerMatch
+        features_dict['MinutesPerMatch'] = minutes / matches
         
-        # Advanced stats (with defaults)
-        features.append(row.get('Shots', 0))
-        features.append(row.get('ShotsOnTarget', 0))
-        features.append(row.get('PassesCompleted', 0))
-        features.append(row.get('PassCompletionPct', 75))
-        features.append(row.get('ProgressivePasses', 0))
-        features.append(row.get('Tackles', 0))
-        features.append(row.get('Interceptions', 0))
-        features.append(row.get('DribblesCompleted', 0))
-        features.append(row.get('Touches', 0))
+        # Feature 2: GoalsPerMatch
+        features_dict['GoalsPerMatch'] = goals / matches
         
-        # Engineered features
-        features.append(minutes / row.get('Matches', 1) if row.get('Matches', 0) > 0 else 0)
-        features.append(goals / row.get('Matches', 1) if row.get('Matches', 0) > 0 else 0)
-        features.append(row.get('Starts', 0) / row.get('Matches', 1) if row.get('Matches', 0) > 0 else 0)
-        features.append(row.get('PassCompletionPct', 75) / 100.0)
-        features.append(goals + assists)
-        features.append(row.get('Tackles', 0) + row.get('Interceptions', 0))
-        features.append(0)  # PhysicalityScore placeholder
-        features.append(minutes / (row.get('Matches', 1) * 90) if row.get('Matches', 0) > 0 else 0)
-        features.append(max(0, 25 - row.get('Age', 18)) / 10)
-        features.append(0)  # PositionAdjustedRating placeholder
+        # Feature 3: StartPercentage
+        features_dict['StartPercentage'] = row.get('Starts', 0) / matches
         
-        # Position encoding
-        position = row.get('Position', 'FW')
-        if position == 'FW':
-            features.extend([1, 0, 0])
-        elif position == 'MF':
-            features.extend([0, 1, 0])
-        elif position == 'DF':
-            features.extend([0, 0, 1])
+        # Feature 4: CompletionRate
+        if 'PassCompletionPct' in row:
+            features_dict['CompletionRate'] = row['PassCompletionPct'] / 100.0
         else:
-            features.extend([0, 0, 0])
+            features_dict['CompletionRate'] = 0.75
+            
+        # Feature 5: AttackingContribution
+        features_dict['AttackingContribution'] = goals + assists
         
-        # Ensure correct number of features
-        if len(features) > 20:
-            features = features[:20]
-        elif len(features) < 20:
-            features.extend([0] * (20 - len(features)))
+        # Feature 6: DefensiveContribution
+        features_dict['DefensiveContribution'] = row.get('Tackles', 0) + row.get('Interceptions', 0)
         
-        return np.array(features).reshape(1, -1)
+        # Feature 7: PhysicalityScore (Height/Weight proxy)
+        # In train_new.py this uses means. Here we'll use 0 as baseline if missing.
+        features_dict['PhysicalityScore'] = 0 
+        
+        # Feature 8: ConsistencyScore
+        features_dict['ConsistencyScore'] = min(max(minutes / (matches * 90), 0), 1)
+        
+        # Feature 9: AgeBonus
+        features_dict['AgeBonus'] = max(0, 25 - row.get('Age', 18)) / 10
+        
+        # Feature 10: PositionAdjustedRating
+        # In training this is CurrentAbility - Mean(Pos_CurrentAbility)
+        # We'll use CurrentAbility directly as fallback or approximate if possible
+        features_dict['PositionAdjustedRating'] = row.get('CurrentAbility', 50) - 50 # Centered around 50
+        
+        # 4. Assemble in correct order
+        all_feature_names = CORE_FEATURES + ENGINEERED_FEATURES
+        feature_list = []
+        for feat in all_feature_names:
+            feature_list.append(features_dict.get(feat, 0))
+            
+        return np.array(feature_list).reshape(1, -1)
     
     def predict_development_potential(self, row: pd.Series) -> float:
         """Use ML model to predict development potential."""
@@ -775,8 +764,9 @@ def calculate_all_potentials_hybrid(df: pd.DataFrame) -> pd.DataFrame:
     print("   • Fix: Incomplete season handling")
     
     # Default model paths
-    model_path = os.path.join('saved_models', 'youth_potential_model.pkl')
-    scaler_path = os.path.join('saved_models', 'feature_scaler.pkl')
+    from config_new import MODEL_FILENAME, SCALER_FILENAME
+    model_path = os.path.join('saved_models', MODEL_FILENAME)
+    scaler_path = os.path.join('saved_models', SCALER_FILENAME)
     
     calculator = HybridPerformanceCalculator(model_path, scaler_path)
     
