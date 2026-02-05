@@ -16,9 +16,10 @@ from datetime import datetime
 
 # Import from config
 from config_new import (
-    DATA_DIR, OUTPUT_DIR, SCRAPED_FILES, GK_FILES, GK_COLUMNS,
+    DATA_DIR, OUTPUT_DIR, MODEL_DIR, SCRAPED_FILES, GK_FILES, GK_COLUMNS,
     SCRAPED_COLUMNS, standardize_position, calculate_age_from_birth_year,
-    TOP_N_PROSPECTS, MIN_MATCHES_PLAYED, MIN_POTENTIAL_THRESHOLD
+    TOP_N_PROSPECTS, MIN_MATCHES_PLAYED, MIN_POTENTIAL_THRESHOLD,
+    MODEL_FILENAME, SCALER_FILENAME
 )
 
 # Import FIXED calculators
@@ -29,6 +30,7 @@ from performance_calculator_fixed import (
     get_player_progression,
     export_top_prospects_comprehensive
 )
+from evaluation_metrics import run_comprehensive_evaluation
 
 
 class BundesligaPredictorFixed:
@@ -42,6 +44,12 @@ class BundesligaPredictorFixed:
         self.df_top_100 = None
         self.position_data = None
         self.progression_df = None
+        
+        # Initialize calculator
+        from performance_calculator_fixed import HybridPerformanceCalculator
+        model_path = os.path.join(MODEL_DIR, MODEL_FILENAME)
+        scaler_path = os.path.join(MODEL_DIR, SCALER_FILENAME)
+        self.calculator = HybridPerformanceCalculator(model_path, scaler_path)
     
     def load_scraped_data(self):
         """Load all Bundesliga U19 season files including goalkeepers with CORRECTED GK stats."""
@@ -208,17 +216,37 @@ class BundesligaPredictorFixed:
             df[col] = df[col].fillna(0)
             
         # 4. Calculate 90s
-        if 'Nineties' not in df.columns and 'Minutes' in df.columns:
-            df['Nineties'] = df['Minutes'] / 90.0
-        
-        if 'GoalsPer90' not in df.columns:
-            df['GoalsPer90'] = df.apply(
-                lambda row: row['Goals'] / row['Nineties'] if row.get('Nineties', 0) > 0 and row['Position'] != 'GK' else 0,
+        if 'Starts' not in df.columns:
+            df['Starts'] = df['Matches']
+
+        # 5. Fix Goalkeeper Clean Sheet % (TASK 3)
+        gk_mask = df['Position'] == 'GK'
+        if 'CleanSheets' in df.columns and 'Matches' in df.columns:
+            # Recalculate to prevent CSV inflation or duplicate errors
+            # Only compute where Matches > 0
+            df.loc[gk_mask, 'CleanSheetPercentage'] = df.apply(
+                lambda row: (row['CleanSheets'] / row['Matches'] * 100) if row.get('Matches', 0) > 0 and row['Position'] == 'GK' else row.get('CleanSheetPercentage', 0),
                 axis=1
             )
             
-        if 'Starts' not in df.columns:
-            df['Starts'] = df['Matches']
+            # Clip between 0 and 100
+            df.loc[gk_mask, 'CleanSheetPercentage'] = df.loc[gk_mask, 'CleanSheetPercentage'].clip(0, 100)
+            
+            # Diagnostic for stats exceeding 100% (before clipping we could have detected them)
+            # Let's perform detection on original values if requested
+            inflated_gks = df[gk_mask & (df['CleanSheetPercentage'] > 100)] # This won't work after clipping
+            
+            # Redo diagnostic check just before clipping
+            raw_cs_pct = df.loc[gk_mask].apply(
+                lambda row: (row['CleanSheets'] / row['Matches'] * 100) if row.get('Matches', 0) > 0 else 0, axis=1
+            )
+            bad_data = df.loc[gk_mask][raw_cs_pct > 100]
+            if not bad_data.empty:
+                print("\n⚠️  DIAGNOSTIC: Inflated GK Stats Detected!")
+                for _, row in bad_data.iterrows():
+                    pct = (row['CleanSheets'] / row['Matches'] * 100)
+                    print(f"   • {row['Player']}: {pct:.1f}% CS ({row['CleanSheets']} CS / {row['Matches']} Matches)")
+                print("   ✅ Fixed by clipping to 100% and recalculating.")
 
         # ========================================
         # CRITICAL FIX: SAFE DEDUPLICATION
@@ -457,6 +485,108 @@ class BundesligaPredictorFixed:
         print(f"\n💾 Comprehensive analysis exported: {export_path}")
         return export_path
 
+    def evaluate_results(self):
+        """
+        TASK 1 & 2: Comprehensive Multi-Target Evaluation (Pure ML vs Hybrid)
+        Evaluates Current Rating, Next-Season Rating, and Peak Potential.
+        """
+        from evaluation_metrics import run_comprehensive_evaluation, print_evaluation_summary
+        
+        print("\n" + "=" * 70)
+        print("COMPREHENSIVE MODEL EVALUATION OVERHAUL")
+        print("=" * 70)
+        
+        # 1. Load Teacher Data
+        teacher_path = os.path.join(OUTPUT_DIR, 'processed_teacher_data.csv')
+        if not os.path.exists(teacher_path):
+            teacher_path = os.path.join(DATA_DIR, 'teacher_data.csv') # Fallback to raw if processed missing
+            
+        if not os.path.exists(teacher_path):
+            print(f"⚠️  Teacher data not found at {teacher_path}. Skipping evaluation.")
+            return
+            
+        print(f"📊 Loading teacher data: {teacher_path}")
+        df_teacher = pd.read_csv(teacher_path)
+        
+        # 2. Prepare for Evaluation
+        # We need to run predictions for every row in the teacher data
+        print(f"🔄 Running predictions for {len(df_teacher)} teacher samples...")
+        eval_results = []
+        
+        for _, row in df_teacher.iterrows():
+            # Get Full Hybrid Result
+            res = self.calculator.calculate_potential(row)
+            
+            # Combine with original labels
+            combined = row.to_dict()
+            combined.update(res)
+            eval_results.append(combined)
+            
+        df_eval = pd.DataFrame(eval_results)
+        
+        # 3. Define Configurations for Pure ML vs Hybrid (TASK 1)
+        # Target A: Pure ML (MLDevelopmentScore vs PotentialAbility)
+        ml_config = [
+            {'true': 'PotentialAbility', 'pred': 'MLDevelopmentScore', 'name': 'Peak Potential (ML)'}
+        ]
+        
+        # Target B: Hybrid System (Complete System)
+        hybrid_config = [
+            {'true': 'CurrentAbility', 'pred': 'PerformanceScore', 'name': 'Current Rating (Hybrid)'},
+            {'true': 'PotentialAbility', 'pred': 'PredictedPotential', 'name': 'Peak Potential (Hybrid)'}
+        ]
+        
+        # Target C: Next-Season (TASK 2)
+        if 'NextSeasonAbility' in df_eval.columns:
+            # We use MLDevelopmentScore as the best predictor for next season in this system
+            hybrid_config.append({
+                'true': 'NextSeasonAbility', 
+                'pred': 'MLDevelopmentScore', 
+                'name': 'Next-Season Rating (Hybrid)'
+            })
+        else:
+            print("⚠️  WARNING: 'NextSeasonAbility' not found in teacher data. Skipping Next-Season evaluation.")
+
+        # 4. Run Evaluations
+        # Pure ML
+        reg_ml, fair_ml, gap_ml = run_comprehensive_evaluation(
+            df_eval, ml_config, base_path=os.path.join(OUTPUT_DIR, 'ml_model')
+        )
+        
+        # Hybrid System
+        reg_hyb, fair_hyb, gap_hyb = run_comprehensive_evaluation(
+            df_eval, hybrid_config, base_path=os.path.join(OUTPUT_DIR, 'hybrid_system')
+        )
+        
+        # 5. Output Results (TASK 5)
+        print_evaluation_summary("PURE ML MODEL EVALUATION", reg_ml, fair_ml, gap_ml)
+        print_evaluation_summary("HYBRID SYSTEM EVALUATION", reg_hyb, fair_hyb, gap_hyb)
+        
+        # Save consolidated reports (TASK 5)
+        reg_ml.to_csv(os.path.join(OUTPUT_DIR, 'ml_model_metrics_report.csv'), index=False)
+        reg_hyb.to_csv(os.path.join(OUTPUT_DIR, 'hybrid_system_metrics_report.csv'), index=False)
+        fair_hyb.to_csv(os.path.join(OUTPUT_DIR, 'fairness_metrics_report.csv'), index=False)
+        
+        print(f"\n✅ All evaluation reports saved to {OUTPUT_DIR}/")
+        
+        # 6. Final Validation Check (TASK 6)
+        # Rule: Pass if Peak Potential (Hybrid) R2 > 0.70 and Spearman > 0.50
+        target_metrics = reg_hyb[reg_hyb['Target'].str.contains('Peak Potential')]
+        if not target_metrics.empty:
+            r2 = target_metrics.iloc[0]['R2']
+            spearman = target_metrics.iloc[0]['Spearman_Rank_Corr']
+            
+            print("\n" + "=" * 50)
+            print("FINAL SYSTEM VALIDATION")
+            print("-" * 50)
+            if r2 > 0.70 and spearman > 0.50:
+                print(f"✅ PASS: R²={r2:.3f}, Spearman={spearman:.3f}")
+                print("   System meets academic standards for reliability.")
+            else:
+                print(f"⚠️  WARNING: System metrics (R²={r2:.3f}, Spearman={spearman:.3f}) below threshold.")
+                print("   Further feature engineering or data cleaning recommended.")
+            print("=" * 50)
+
     def run_player_diagnostic(self, player_name="Iaia Danfa"):
         """Run diagnostic checks for a specific player."""
         print("\n" + "=" * 80)
@@ -500,8 +630,9 @@ class BundesligaPredictorFixed:
         
         report = self.generate_scouting_report(top_prospects)
         
-        # 4. Export
+        # 4. Export & Evaluate
         self.export_comprehensive_analysis(top_prospects, position_rankings)
+        self.evaluate_results()
         
         report_path = os.path.join(OUTPUT_DIR, 'bundesliga_scouting_report_comprehensive.txt')
         with open(report_path, 'w', encoding='utf-8') as f:
