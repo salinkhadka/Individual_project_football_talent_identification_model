@@ -28,140 +28,12 @@ def get_db_columns(db_path: str) -> list:
     return columns
 
 
-def process_sheet_smart(df, db, sheet_name, valid_columns):
-    """Process a sheet - only insert columns that exist in DB"""
-    print(f"\n📊 Processing sheet: {sheet_name}")
-    if df.empty:
-        print("   • No data found, skipping...")
-        return
-
-    # Print columns for GK sheets
-    if 'GK' in sheet_name:
-        print(f"   • Columns in Excel: {list(df.columns)[:15]}...")
-
-    players_data = []
-    for idx, row in df.iterrows():
-        # Map Excel columns to DB columns
-        column_mapping = {
-            'Player': 'player_name',
-            'Season': 'season',
-            'SeasonOrder': 'season_order',
-            'IsLatestSeason': 'is_latest_season',
-            'Age': 'age',
-            'BirthYear': 'birth_year',
-            'Position': 'position',
-            'Pos_std': 'position',  # Alternative
-            'Club': 'club',
-            'Squad_std': 'club',  # Alternative
-            'Nation': 'nation',
-            'Nation_std': 'nation',  # Alternative
-            'PredictedPotential': 'predicted_potential',
-            'PerformanceScore': 'performance_score',
-            'BasePerformanceScore': 'base_performance_score',
-            'MLDevelopmentScore': 'ml_development_score',
-            'PlayingTimeScore': 'playing_time_score',
-            'Confidence': 'confidence',
-            'ConfidenceWeight': 'confidence_weight',
-            'AgeMultiplier': 'age_multiplier',
-            'AgeBonus': 'age_bonus',
-            'EliteBonus': 'elite_bonus',
-            'SamplePenalty': 'sample_penalty',
-            'Matches': 'matches',
-            'Playing Time_MP_std': 'matches',
-            'Starts': 'starts',
-            'Playing Time_Starts': 'starts',
-            'Minutes': 'minutes',
-            'Playing Time_Min_std': 'minutes',
-            'Nineties': 'nineties',
-            'Playing Time_90s_match': 'nineties',
-            'Goals': 'goals',
-            'Performance_Gls': 'goals',
-            'Assists': 'assists',
-            'Performance_Ast': 'assists',
-            'GoalsPer90': 'goals_per_90',
-            'Per 90 Minutes_Gls': 'goals_per_90',
-            'AssistsPer90': 'assists_per_90',
-            'Per 90 Minutes_Ast': 'assists_per_90',
-            'xGPer90': 'xg_per_90',
-            'Expected_xG': 'xg_per_90',
-            'xAPer90': 'xa_per_90',
-            'Expected_xAG': 'xa_per_90',
-            'SavePercentage': 'save_percentage',
-            'Save%': 'save_percentage',
-            'Performance_Save%': 'save_percentage',
-            'CleanSheetPercentage': 'clean_sheet_percentage',
-            'CS%': 'clean_sheet_percentage',
-            'Performance_CS%': 'clean_sheet_percentage',
-            'GoalsAgainstPer90': 'goals_against_per_90',
-            'GA90': 'goals_against_per_90',
-            'Performance_GA90': 'goals_against_per_90',
-            'CleanSheets': 'clean_sheets',
-            'CS': 'clean_sheets',
-            'Performance_CS': 'clean_sheets',
-            'GoalsAgainst': 'goals_against',
-            'GA': 'goals_against',
-            'Performance_GA': 'goals_against',
-            'Saves': 'saves',
-            'Performance_Saves': 'saves',
-            'Tags': 'tags'
-        }
-        
-        # Build player_data with only valid columns
-        player_data = {}
-        
-        for excel_col, db_col in column_mapping.items():
-            if db_col in valid_columns and excel_col in row.index:
-                value = row.get(excel_col)
-                
-                # Handle boolean conversion
-                if db_col == 'is_latest_season':
-                    player_data[db_col] = bool(value) if pd.notna(value) else False
-                # Handle integer conversion
-                elif db_col in ['age', 'birth_year', 'matches', 'starts', 'minutes', 
-                               'goals', 'assists', 'clean_sheets', 'goals_against', 'saves']:
-                    player_data[db_col] = int(value) if pd.notna(value) else (0 if db_col in ['matches', 'starts', 'minutes', 'goals', 'assists'] else None)
-                # Handle float/numeric conversion
-                elif db_col in ['predicted_potential', 'performance_score', 'base_performance_score',
-                               'ml_development_score', 'playing_time_score', 'confidence_weight',
-                               'age_multiplier', 'age_bonus', 'elite_bonus', 'sample_penalty',
-                               'nineties', 'goals_per_90', 'assists_per_90', 'xg_per_90', 'xa_per_90',
-                               'save_percentage', 'clean_sheet_percentage', 'goals_against_per_90']:
-                    player_data[db_col] = clean_value(value)
-                # Handle strings
-                else:
-                    player_data[db_col] = clean_value(value)
-        
-        # Debug: print first GK found
-        if player_data.get('position') == 'GK' and idx == 0:
-            print(f"   • First GK found: {player_data.get('player_name')}")
-            print(f"     - Save%: {player_data.get('save_percentage')}")
-            print(f"     - CS%: {player_data.get('clean_sheet_percentage')}")
-            print(f"     - Saves: {player_data.get('saves')}")
-            print(f"     - Potential: {player_data.get('predicted_potential')}")
-            print(f"     - DB columns used: {list(player_data.keys())}")
-        
-        players_data.append(player_data)
-
-        # Progress indicator
-        if (idx + 1) % 500 == 0:
-            print(f"   • Processed {idx + 1}/{len(df)} records...")
-
-    # Insert sheet data
-    db.bulk_insert_players(players_data)
-    print(f"   ✅ Sheet '{sheet_name}' imported ({len(players_data)} records).")
-    
-    # Count GKs in this sheet
-    gk_count = sum(1 for p in players_data if p.get('position') == 'GK')
-    if gk_count > 0:
-        print(f"   🧤 Goalkeepers in this sheet: {gk_count}")
-
-
 def import_from_excel(excel_path: str, db_path: str = "database.db"):
     """
-    Smart import - only imports columns that exist in DB
+    Smart import - aggregates all sheets into a single record per (player, season)
     """
     print("\n" + "=" * 70)
-    print("SMART IMPORT - AUTO-DETECTS DATABASE SCHEMA")
+    print("AGGREGATED SMART IMPORT - PREVENTS DATA LOSS ACROSS SHEETS")
     print("=" * 70)
     
     if not os.path.exists(excel_path):
@@ -175,7 +47,6 @@ def import_from_excel(excel_path: str, db_path: str = "database.db"):
     # Get valid columns from DB
     valid_columns = get_db_columns(db_path)
     print(f"\n✅ Database columns detected: {len(valid_columns)}")
-    print(f"   • Sample columns: {valid_columns[:10]}...")
     
     # Clear existing data
     print("\n🗑️  Clearing existing database...")
@@ -185,13 +56,131 @@ def import_from_excel(excel_path: str, db_path: str = "database.db"):
     excel_sheets = pd.read_excel(excel_path, sheet_name=None)
     print(f"\n📝 Sheets found: {list(excel_sheets.keys())}")
     
-    # Process each sheet
-    for sheet_name, df in excel_sheets.items():
-        process_sheet_smart(df, db, sheet_name, valid_columns)
+    # Dictionary to aggregate all player data: (player_name, season) -> data_dict
+    all_players_map = {}
     
-    # Update best potential flags
+    # Column mapping (moved outside the loop for efficiency)
+    column_mapping = {
+        'Player': 'player_name',
+        'Season': 'season',
+        'SeasonOrder': 'season_order',
+        'IsLatestSeason': 'is_latest_season',
+        'Age': 'age',
+        'BirthYear': 'birth_year',
+        'Position': 'position',
+        'Pos_std': 'position',
+        'Club': 'club',
+        'Squad_std': 'club',
+        'Nation': 'nation',
+        'Nation_std': 'nation',
+        'PredictedPotential': 'predicted_potential',
+        'PerformanceScore': 'performance_score',
+        'BasePerformanceScore': 'base_performance_score',
+        'MLDevelopmentScore': 'ml_development_score',
+        'PlayingTimeScore': 'playing_time_score',
+        'Confidence': 'confidence',
+        'ConfidenceWeight': 'confidence_weight',
+        'AgeMultiplier': 'age_multiplier',
+        'AgeBonus': 'age_bonus',
+        'EliteBonus': 'elite_bonus',
+        'SamplePenalty': 'sample_penalty',
+        'Matches': 'matches',
+        'Playing Time_MP_std': 'matches',
+        'Starts': 'starts',
+        'Playing Time_Starts': 'starts',
+        'Minutes': 'minutes',
+        'Playing Time_Min_std': 'minutes',
+        'Nineties': 'nineties',
+        'Playing Time_90s_match': 'nineties',
+        'Goals': 'goals',
+        'Performance_Gls': 'goals',
+        'Assists': 'assists',
+        'Performance_Ast': 'assists',
+        'GoalsPer90': 'goals_per_90',
+        'Per 90 Minutes_Gls': 'goals_per_90',
+        'AssistsPer90': 'assists_per_90',
+        'Per 90 Minutes_Ast': 'assists_per_90',
+        'xGPer90': 'xg_per_90',
+        'Expected_xG': 'xg_per_90',
+        'xAPer90': 'xa_per_90',
+        'Expected_xAG': 'xa_per_90',
+        'SavePercentage': 'save_percentage',
+        'Save%': 'save_percentage',
+        'Performance_Save%': 'save_percentage',
+        'CleanSheetPercentage': 'clean_sheet_percentage',
+        'CS%': 'clean_sheet_percentage',
+        'Performance_CS%': 'clean_sheet_percentage',
+        'GoalsAgainstPer90': 'goals_against_per_90',
+        'GA90': 'goals_against_per_90',
+        'Performance_GA90': 'goals_against_per_90',
+        'CleanSheets': 'clean_sheets',
+        'CS': 'clean_sheets',
+        'Performance_CS': 'clean_sheets',
+        'GoalsAgainst': 'goals_against',
+        'GA': 'goals_against',
+        'Performance_GA': 'goals_against',
+        'Saves': 'saves',
+        'Performance_Saves': 'saves',
+        'Tags': 'tags'
+    }
+
+    # Process each sheet and aggregate data
+    for sheet_name, df in excel_sheets.items():
+        print(f"\n📊 Aggregating sheet: {sheet_name}")
+        if df.empty: continue
+        
+        sheet_count = 0
+        for _, row in df.iterrows():
+            # Build current row data
+            current_data = {}
+            for excel_col, db_col in column_mapping.items():
+                if excel_col in row.index:
+                    val = row.get(excel_col)
+                    if pd.notna(val):
+                        # Proper type conversion
+                        if db_col in ['age', 'birth_year', 'matches', 'starts', 'minutes', 
+                                     'goals', 'assists', 'clean_sheets', 'goals_against', 'saves']:
+                            try: current_data[db_col] = int(float(val))
+                            except: pass
+                        elif db_col in ['is_latest_season']:
+                            current_data[db_col] = bool(val)
+                        else:
+                            current_data[db_col] = clean_value(val)
+            
+            p_name = current_data.get('player_name')
+            p_season = current_data.get('season')
+            
+            if not p_name or not p_season: continue
+            
+            key = (p_name, p_season)
+            if key not in all_players_map:
+                all_players_map[key] = current_data
+            else:
+                # Merge: update existing record with new non-null values
+                for k, v in current_data.items():
+                    # Preserve existing non-None values unless new value is "better"
+                    # For numeric stats, we usually prefer non-zero if one is zero
+                    if v is not None:
+                        old_v = all_players_map[key].get(k)
+                        if old_v is None or (isinstance(v, (int, float)) and old_v == 0 and v > 0):
+                            all_players_map[key][k] = v
+            sheet_count += 1
+        print(f"   ✅ Processed {sheet_count} records.")
+
+    # Convert mapping to list and filter columns
+    print(f"\n🚀 Total unique player records: {len(all_players_map)}")
+    final_players = []
+    for player_data in all_players_map.values():
+        final_players.append({k: v for k, v in player_data.items() if k in valid_columns})
+    
+    # Final bulk insert
+    db.bulk_insert_players(final_players)
+    
+    # Update best potential flags (MANDATORY AFTER ALL INSERTS)
     print("\n🔄 Updating best potential flags...")
     db.update_best_potential_flags()
+    
+    # Show statistics
     
     # Show statistics
     print("\n" + "=" * 70)
