@@ -241,7 +241,7 @@ class Database:
             print(f"Error updating player scores: {e}")
             conn.close()
             return False
-
+    
     def get_player_best_season(self, player_name: str) -> Optional[Dict]:
         """Get player's BEST season (highest potential)"""
         conn = self.get_connection()
@@ -487,10 +487,13 @@ class Database:
         conn.close()
         print("🗑️  Database cleared")
     
-    def insert_player(self, player_data: Dict):
-        """Insert or replace a player record"""
-        conn = self.get_connection()
-        cursor = conn.cursor()
+    def insert_player(self, player_data: Dict, cursor=None):
+        """Insert or replace a player record. Can accept an optional cursor for bulk operations."""
+        should_close = False
+        if cursor is None:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            should_close = True
         
         # Get existing columns
         cursor.execute("PRAGMA table_info(players)")
@@ -500,7 +503,8 @@ class Database:
         filtered_data = {k: v for k, v in player_data.items() if k in existing_columns}
         
         if not filtered_data:
-            conn.close()
+            if should_close:
+                cursor.connection.close()
             return
         
         # Build dynamic insert
@@ -509,16 +513,42 @@ class Database:
         column_names = ', '.join(columns)
         values = [filtered_data[col] for col in columns]
         
-        cursor.execute(f"""
-            INSERT OR REPLACE INTO players ({column_names})
-            VALUES ({placeholders})
-        """, values)
+        cursor.execute(f"INSERT OR REPLACE INTO players ({column_names}) VALUES ({placeholders})", values)
         
-        conn.commit()
-        conn.close()
+        if should_close:
+            cursor.connection.commit()
+            cursor.connection.close()
     
     def bulk_insert_players(self, players: List[Dict]):
-        """Bulk insert players"""
-        for player_data in players:
-            self.insert_player(player_data)
-        print(f"✅ Inserted {len(players)} player records")
+        """Bulk insert players using a single transaction for efficiency."""
+        if not players:
+            return
+            
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        try:
+            # Get existing columns once to avoid repeated PRAGMA calls
+            cursor.execute("PRAGMA table_info(players)")
+            existing_columns = {col[1] for col in cursor.fetchall()}
+            
+            for player_data in players:
+                filtered_data = {k: v for k, v in player_data.items() if k in existing_columns}
+                if not filtered_data:
+                    continue
+                    
+                columns = list(filtered_data.keys())
+                placeholders = ', '.join(['?' for _ in columns])
+                column_names = ', '.join(columns)
+                values = [filtered_data[col] for col in columns]
+                
+                cursor.execute(f"INSERT OR REPLACE INTO players ({column_names}) VALUES ({placeholders})", values)
+                
+            conn.commit()
+            print(f"✅ Inserted {len(players)} player records")
+        except Exception as e:
+            conn.rollback()
+            print(f"❌ Bulk insert failed: {e}")
+            raise
+        finally:
+            conn.close()
